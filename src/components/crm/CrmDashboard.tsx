@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { missingSetupFields } from '../../data/defaultSettings';
+import { DEMO_MODE } from '../../config';
 import { KanbanBoard } from './KanbanBoard';
 import { QuotationBuilder } from './QuotationBuilder';
 import { OrdersManager } from './OrdersManager';
@@ -69,18 +71,18 @@ export const CrmDashboard: React.FC = () => {
 
   const totalClosedOrdersCount = wonDeals.length + paidOrders.length;
   const averageTicket =
-    totalClosedOrdersCount > 0 ? Math.round(totalRevenueWon / totalClosedOrdersCount) : 95000;
+    totalClosedOrdersCount > 0 ? Math.round(totalRevenueWon / totalClosedOrdersCount) : 0;
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] pb-24 md:pb-16">
       {/* Demo Mode Info Strip */}
       {isDemoMode && (
-        <div className="bg-[#364637] text-[#F8F7F4] px-4 py-2 text-xs">
+        <div className="bg-[var(--brand-accent)] text-[#F8F7F4] px-4 py-2 text-xs">
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Eye className="w-3.5 h-3.5 shrink-0" />
               <span>
-                <strong>Modo Demo Activo</strong> · Estás explorando el CRM de <strong>TU TIENDA</strong> en modo vista previa (los cambios se prueban localmente sin modificar la base oficial).
+                <strong>Modo Demo Activo</strong> · Estás explorando el panel de <strong>{companySettings?.companyName}</strong> en modo vista previa (los cambios se prueban localmente sin modificar la base oficial).
               </span>
             </div>
             <button
@@ -94,13 +96,13 @@ export const CrmDashboard: React.FC = () => {
       )}
 
       {/* Top Banner Bar */}
-      <div className="bg-[#141413] text-[#F8F7F4] border-b border-[#2A2A27]">
+      <div className="bg-[var(--brand-primary)] text-[#F8F7F4] border-b border-[#2A2A27]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#364637] px-2 py-0.5 rounded text-[#F8F7F4]">
-                  CRM · {companySettings?.companyName || 'TU TIENDA'}
+                <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[var(--brand-accent)] px-2 py-0.5 rounded text-[#F8F7F4]">
+                  Panel · {companySettings?.companyName}
                 </span>
                 <span className="text-xs text-[#9C988F]">
                   Gestión de Indumentaria, Pedidos & Stock
@@ -114,7 +116,7 @@ export const CrmDashboard: React.FC = () => {
             {/* Authenticated user badge & Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden sm:flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl text-xs">
-                <div className="w-6 h-6 rounded-full bg-[#364637] text-[#F8F7F4] flex items-center justify-center font-bold">
+                <div className="w-6 h-6 rounded-full bg-[var(--brand-accent)] text-[#F8F7F4] flex items-center justify-center font-bold">
                   <UserCheck className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -205,6 +207,25 @@ export const CrmDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Aviso de configuración pendiente (tienda real) */}
+      {!isDemoMode && missingSetupFields(companySettings).length > 0 && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 text-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-2">
+            <span>
+              <strong>Completá la configuración antes de vender:</strong>{' '}
+              {missingSetupFields(companySettings).join(' · ')}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCrmSubTab('settings')}
+              className="underline font-bold shrink-0 cursor-pointer"
+            >
+              Ir a Configuración
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CRM Navigation Subtabs */}
       <div className="bg-[#F8F7F4]/95 backdrop-blur-md border-b border-[#E2DFD7] sticky top-16 z-30">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -228,7 +249,7 @@ export const CrmDashboard: React.FC = () => {
                   onClick={() => setCrmSubTab(item.id as typeof crmSubTab)}
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                     active
-                      ? 'bg-[#141413] text-[#F8F7F4]'
+                      ? 'bg-[var(--brand-primary)] text-[#F8F7F4]'
                       : 'text-[#6B675E] hover:text-[#141413] hover:bg-[#EFECE6]'
                   }`}
                 >
@@ -237,7 +258,7 @@ export const CrmDashboard: React.FC = () => {
                   {item.count !== undefined && item.count > 0 && (
                     <span
                       className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold text-white ${
-                        item.urgent && item.urgent > 0 ? 'bg-red-600' : 'bg-[#364637]'
+                        item.urgent && item.urgent > 0 ? 'bg-red-600' : 'bg-[var(--brand-accent)]'
                       }`}
                     >
                       {item.count}

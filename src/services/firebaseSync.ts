@@ -3,19 +3,15 @@ import {
   doc,
   setDoc,
   getDoc,
-  getDocs,
   onSnapshot,
   updateDoc,
   deleteDoc
 } from 'firebase/firestore';
+import { increment } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Product, Order, Deal, Client, Interaction, CompanySettings, CrmNotification } from '../types';
-import { INITIAL_PRODUCTS } from '../data/products';
-import { INITIAL_DEALS, INITIAL_CLIENTS, INITIAL_ORDERS, INITIAL_INTERACTIONS, INITIAL_NOTIFICATIONS } from '../data/crmMockData';
-import { DEFAULT_COMPANY_SETTINGS } from '../data/defaultSettings';
+import { withSettingsDefaults } from '../data/defaultSettings';
 import { resolveProductImage } from '../utils/imageUtils';
-
-export const BOOTSTRAPPED_ADMIN_EMAIL = 'ajnovasistemas@gmail.com';
 
 export enum OperationType {
   CREATE = 'create',
@@ -101,97 +97,14 @@ export function stripUndefined<T>(value: T): T {
  * Checks whether a signed-in Firebase user is authorized to manage the CRM.
  */
 export async function checkIsAuthorizedAdmin(uid: string, email?: string | null, emailVerified?: boolean): Promise<boolean> {
+  // Un usuario es administrador si existe el documento /admins/{uid} (ver README).
+  void email;
   if (!emailVerified) return false;
-  if (email && email.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL) {
-    return true;
-  }
   try {
     const adminSnap = await getDoc(doc(db, 'admins', uid));
     return adminSnap.exists();
   } catch {
     return false;
-  }
-}
-
-/**
- * Seeds initial TU TIENDA data ONLY when called by an authenticated CRM admin.
- */
-export async function seedInitialDataIfEmpty(): Promise<void> {
-  if (!auth.currentUser) return;
-
-  try {
-    const productsSnap = await getDocs(collection(db, 'products'));
-    if (productsSnap.empty) {
-      for (const prod of INITIAL_PRODUCTS) {
-        await setDoc(doc(db, 'products', prod.id), stripUndefined(prod));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'products', false);
-  }
-
-  try {
-    const clientsSnap = await getDocs(collection(db, 'clients'));
-    if (clientsSnap.empty) {
-      for (const client of INITIAL_CLIENTS) {
-        await setDoc(doc(db, 'clients', client.id), stripUndefined(client));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'clients', false);
-  }
-
-  try {
-    const dealsSnap = await getDocs(collection(db, 'deals'));
-    if (dealsSnap.empty) {
-      for (const deal of INITIAL_DEALS) {
-        await setDoc(doc(db, 'deals', deal.id), stripUndefined(deal));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'deals', false);
-  }
-
-  try {
-    const ordersSnap = await getDocs(collection(db, 'orders'));
-    if (ordersSnap.empty) {
-      for (const order of INITIAL_ORDERS) {
-        await setDoc(doc(db, 'orders', order.id), stripUndefined(order));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'orders', false);
-  }
-
-  try {
-    const interactionsSnap = await getDocs(collection(db, 'interactions'));
-    if (interactionsSnap.empty) {
-      for (const inter of INITIAL_INTERACTIONS) {
-        await setDoc(doc(db, 'interactions', inter.id), stripUndefined(inter));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'interactions', false);
-  }
-
-  try {
-    const settingsSnap = await getDoc(doc(db, 'settings', 'company'));
-    if (!settingsSnap.exists()) {
-      await setDoc(doc(db, 'settings', 'company'), stripUndefined(DEFAULT_COMPANY_SETTINGS));
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'settings/company', false);
-  }
-
-  try {
-    const notifsSnap = await getDocs(collection(db, 'notifications'));
-    if (notifsSnap.empty) {
-      for (const notif of INITIAL_NOTIFICATIONS) {
-        await setDoc(doc(db, 'notifications', notif.id), stripUndefined(notif));
-      }
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'notifications', false);
   }
 }
 
@@ -208,7 +121,7 @@ export function subscribeToProducts(callback: (products: Product[]) => void) {
           image: resolveProductImage(p.image, p.category)
         });
       });
-      callback(prods.length > 0 ? prods : INITIAL_PRODUCTS);
+      callback(prods);
     },
     (err) => {
       handleFirestoreError(err, OperationType.LIST, 'products', false);
@@ -222,9 +135,9 @@ export function subscribeToSettings(callback: (settings: CompanySettings) => voi
     doc(db, 'settings', 'company'),
     (snap) => {
       if (snap.exists()) {
-        callback(snap.data() as CompanySettings);
+        callback(withSettingsDefaults(snap.data() as Partial<CompanySettings>));
       } else {
-        callback(DEFAULT_COMPANY_SETTINGS);
+        callback(withSettingsDefaults(null));
       }
     },
     (err) => {
@@ -253,8 +166,9 @@ export function subscribeToOrders(callback: (orders: Order[]) => void) {
           items: normalizedItems
         });
       });
-      ordersList.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      callback(ordersList.length > 0 ? ordersList : INITIAL_ORDERS);
+      const sortKey = (o: Order & { createdAtIso?: string }) => o.createdAtIso || o.id;
+      ordersList.sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
+      callback(ordersList);
     },
     (err) => {
       handleFirestoreError(err, OperationType.LIST, 'orders', false);
@@ -269,7 +183,7 @@ export function subscribeToDeals(callback: (deals: Deal[]) => void) {
       const dealsList: Deal[] = [];
       snap.forEach((d) => dealsList.push(d.data() as Deal));
       dealsList.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-      callback(dealsList.length > 0 ? dealsList : INITIAL_DEALS);
+      callback(dealsList);
     },
     (err) => {
       handleFirestoreError(err, OperationType.LIST, 'deals', false);
@@ -283,7 +197,7 @@ export function subscribeToClients(callback: (clients: Client[]) => void) {
     (snap) => {
       const clientsList: Client[] = [];
       snap.forEach((d) => clientsList.push(d.data() as Client));
-      callback(clientsList.length > 0 ? clientsList : INITIAL_CLIENTS);
+      callback(clientsList);
     },
     (err) => {
       handleFirestoreError(err, OperationType.LIST, 'clients', false);
@@ -298,7 +212,7 @@ export function subscribeToInteractions(callback: (interactions: Interaction[]) 
       const list: Interaction[] = [];
       snap.forEach((d) => list.push(d.data() as Interaction));
       list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      callback(list.length > 0 ? list : INITIAL_INTERACTIONS);
+      callback(list);
     },
     (err) => {
       handleFirestoreError(err, OperationType.LIST, 'interactions', false);
@@ -428,5 +342,18 @@ export async function deleteNotificationFromFirestore(notificationId: string): P
     await deleteDoc(doc(db, 'notifications', notificationId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `notifications/${notificationId}`);
+  }
+}
+
+/** Devuelve al stock las prendas de un pedido cancelado (una sola vez por pedido). */
+export async function restoreStockForOrder(order: Order): Promise<void> {
+  try {
+    for (const it of order.items || []) {
+      if (!it.product?.id) continue;
+      await updateDoc(doc(db, 'products', it.product.id), { stock: increment(it.quantity) });
+    }
+    await updateDoc(doc(db, 'orders', order.id), { stockRestored: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `orders/${order.id}`);
   }
 }

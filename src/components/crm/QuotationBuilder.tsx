@@ -24,7 +24,7 @@ interface QuoteItem {
 
 export const QuotationBuilder: React.FC = () => {
   const { products, clients, addDeal, companySettings } = useStore();
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
 
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
@@ -64,7 +64,7 @@ export const QuotationBuilder: React.FC = () => {
     const prod = products.find((p) => p.id === selectedProductId);
     if (!prod) return;
 
-    const unitPrice = calculateUnitPrice(prod, itemQuantity);
+    const unitPrice = calculateUnitPrice(prod, itemQuantity, !!companySettings.wholesaleEnabled);
     const total = unitPrice * itemQuantity;
     const sizeKey = selectedSize || 'Único';
 
@@ -75,7 +75,7 @@ export const QuotationBuilder: React.FC = () => {
       );
       if (existing) {
         const newQty = existing.quantity + itemQuantity;
-        const newUnitPrice = calculateUnitPrice(prod, newQty);
+        const newUnitPrice = calculateUnitPrice(prod, newQty, !!companySettings.wholesaleEnabled);
         return prev.map((item) =>
           item.product.id === prod.id && item.selectedSize === sizeKey
             ? { ...item, quantity: newQty, unitPrice: newUnitPrice, total: newUnitPrice * newQty }
@@ -97,7 +97,7 @@ export const QuotationBuilder: React.FC = () => {
   const finalTotal = subtotal - discountAmount;
 
   const getWhatsAppPitch = () => {
-    let msg = `Hola ${customerName || 'hola'}, te compartimos el presupuesto de *${brandName} · Tienda de Ropa*:\n\n`;
+    let msg = `Hola ${customerName || 'hola'}, te compartimos el presupuesto de *${brandName}*:\n\n`;
     quoteItems.forEach((item, idx) => {
       msg += `• ${idx + 1}. *${item.product.name}* (Talle ${item.selectedSize})\n`;
       msg += `  ${item.quantity} u. x ${formatCurrency(item.unitPrice, false)} = ${formatCurrency(item.total)}\n`;
@@ -138,7 +138,7 @@ export const QuotationBuilder: React.FC = () => {
     setTimeout(() => setQuoteSavedNotification(false), 4000);
   };
 
-  const waUrl = generateWhatsAppLink(phone || '5491158002244', getWhatsAppPitch());
+  const waUrl = generateWhatsAppLink(phone || companySettings?.phone || '', getWhatsAppPitch());
 
   return (
     <div className="space-y-5">
@@ -172,7 +172,7 @@ export const QuotationBuilder: React.FC = () => {
         <div className="lg:col-span-5 space-y-4 no-print">
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2DFD7] space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-              <User className="w-4 h-4 text-[#364637]" />
+              <User className="w-4 h-4 text-[var(--brand-accent)]" />
               <span>Cliente</span>
             </h4>
 
@@ -199,7 +199,7 @@ export const QuotationBuilder: React.FC = () => {
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Ej. Lucía Pereyra"
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
               <div>
@@ -209,7 +209,7 @@ export const QuotationBuilder: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+54 9 11 ..."
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
               <div>
@@ -219,7 +219,7 @@ export const QuotationBuilder: React.FC = () => {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Ej. CABA"
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
               <div>
@@ -229,7 +229,7 @@ export const QuotationBuilder: React.FC = () => {
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="Ej. Particular"
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
             </div>
@@ -237,7 +237,7 @@ export const QuotationBuilder: React.FC = () => {
 
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2DFD7] space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-              <Plus className="w-4 h-4 text-[#364637]" />
+              <Plus className="w-4 h-4 text-[var(--brand-accent)]" />
               <span>Agregar Prenda</span>
             </h4>
 
@@ -286,7 +286,7 @@ export const QuotationBuilder: React.FC = () => {
             <button
               type="button"
               onClick={handleAddItem}
-              className="w-full py-2.5 px-3 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Insertar Prenda</span>
@@ -295,7 +295,7 @@ export const QuotationBuilder: React.FC = () => {
             <div className="pt-2 border-t border-[#E2DFD7]">
               <div className="flex items-center justify-between text-[11px] text-[#6B675E] mb-1">
                 <span className="font-semibold flex items-center gap-1">
-                  <Percent className="w-3.5 h-3.5 text-[#364637]" />
+                  <Percent className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
                   <span>Bonificación especial:</span>
                 </span>
                 <span className="font-mono font-bold text-[#141413]">{additionalDiscountPercent}%</span>
@@ -307,7 +307,7 @@ export const QuotationBuilder: React.FC = () => {
                 step="1"
                 value={additionalDiscountPercent}
                 onChange={(e) => setAdditionalDiscountPercent(parseInt(e.target.value))}
-                className="w-full accent-[#364637] cursor-pointer"
+                className="w-full accent-[var(--brand-accent)] cursor-pointer"
               />
             </div>
           </div>
@@ -315,7 +315,7 @@ export const QuotationBuilder: React.FC = () => {
           <div className="space-y-2">
             <button
               onClick={handleSaveToPipeline}
-              className="w-full py-3 px-4 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
             >
               <Save className="w-4 h-4" />
               <span>Guardar en CRM</span>
@@ -349,7 +349,7 @@ export const QuotationBuilder: React.FC = () => {
                 {brandName}
               </span>
               <span className="text-[10px] uppercase tracking-widest text-[#6B675E] font-semibold block mt-0.5">
-                Tienda de Ropa · {companySettings?.legalName || 'Indumentaria Contemporánea'}
+                {companySettings?.legalName || companySettings?.tagline}
               </span>
               <p className="text-[11px] text-[#6B675E] mt-1">
                 {companySettings?.address}, {companySettings?.city} · {companySettings?.email}
@@ -357,7 +357,7 @@ export const QuotationBuilder: React.FC = () => {
             </div>
 
             <div className="text-right">
-              <span className="text-[11px] font-mono font-bold uppercase text-[#364637] bg-[#EFECE6] px-2.5 py-1 rounded">
+              <span className="text-[11px] font-mono font-bold uppercase text-[var(--brand-accent)] bg-[#EFECE6] px-2.5 py-1 rounded">
                 PRESUPUESTO
               </span>
               <div className="text-[11px] text-[#6B675E] mt-1.5">
@@ -448,7 +448,7 @@ export const QuotationBuilder: React.FC = () => {
                 <span className="font-mono font-semibold">{formatCurrency(subtotal, false)}</span>
               </div>
               {additionalDiscountPercent > 0 && (
-                <div className="flex justify-between text-[#364637] font-semibold">
+                <div className="flex justify-between text-[var(--brand-accent)] font-semibold">
                   <span>Bonificación ({additionalDiscountPercent}%):</span>
                   <span className="font-mono">-{formatCurrency(discountAmount, false)}</span>
                 </div>

@@ -10,7 +10,7 @@ export const OrdersManager: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedOrderForRemito, setSelectedOrderForRemito] = useState<Order | null>(null);
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
 
   React.useEffect(() => {
     if (selectedEntityForFocus?.type === 'order' && selectedEntityForFocus.id) {
@@ -53,7 +53,7 @@ export const OrdersManager: React.FC = () => {
         );
       case 'shipped':
         return (
-          <span className="bg-[#364637]/15 text-[#364637] border border-[#364637]/30 text-[10px] font-bold px-2 py-0.5 rounded">
+          <span className="bg-[var(--brand-accent)]/15 text-[var(--brand-accent)] border border-[var(--brand-accent)]/30 text-[10px] font-bold px-2 py-0.5 rounded">
             Despachado
           </span>
         );
@@ -92,7 +92,7 @@ export const OrdersManager: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por N° pedido o cliente..."
-            className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-white outline-hidden focus:border-[#364637]"
+            className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-white outline-hidden focus:border-[var(--brand-accent)]"
           />
         </div>
       </div>
@@ -112,7 +112,7 @@ export const OrdersManager: React.FC = () => {
             onClick={() => setSelectedStatus(tab.key)}
             className={`px-3 py-1.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
               selectedStatus === tab.key
-                ? 'bg-[#141413] text-[#F8F7F4]'
+                ? 'bg-[var(--brand-primary)] text-[#F8F7F4]'
                 : 'bg-white text-[#6B675E] hover:bg-[#EFECE6] border border-[#E2DFD7]'
             }`}
           >
@@ -191,7 +191,7 @@ export const OrdersManager: React.FC = () => {
                   {order.status === 'pending_payment' && (
                     <button
                       onClick={() => updateOrderStatus(order.id, 'paid')}
-                      className="px-3 py-1.5 bg-[#141413] text-[#F8F7F4] rounded-xl text-[11px] font-bold"
+                      className="px-3 py-1.5 bg-[var(--brand-primary)] text-[#F8F7F4] rounded-xl text-[11px] font-bold"
                     >
                       Acreditar Pago
                     </button>
@@ -199,7 +199,7 @@ export const OrdersManager: React.FC = () => {
                   {order.status === 'paid' && (
                     <button
                       onClick={() => updateOrderStatus(order.id, 'preparing')}
-                      className="px-3 py-1.5 bg-[#364637] text-white rounded-xl text-[11px] font-bold"
+                      className="px-3 py-1.5 bg-[var(--brand-accent)] text-white rounded-xl text-[11px] font-bold"
                     >
                       Preparar
                     </button>
@@ -207,7 +207,7 @@ export const OrdersManager: React.FC = () => {
                   {order.status === 'preparing' && (
                     <button
                       onClick={() => updateOrderStatus(order.id, 'shipped')}
-                      className="px-3 py-1.5 bg-[#364637] text-white rounded-xl text-[11px] font-bold flex items-center gap-1"
+                      className="px-3 py-1.5 bg-[var(--brand-accent)] text-white rounded-xl text-[11px] font-bold flex items-center gap-1"
                     >
                       <Truck className="w-3.5 h-3.5" />
                       <span>Despachar</span>
@@ -307,7 +307,7 @@ export const OrdersManager: React.FC = () => {
                           {order.status === 'pending_payment' && (
                             <button
                               onClick={() => updateOrderStatus(order.id, 'paid')}
-                              className="px-2.5 py-1 bg-[#141413] hover:bg-[#364637] text-white rounded-lg text-[10px] font-bold"
+                              className="px-2.5 py-1 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white rounded-lg text-[10px] font-bold"
                             >
                               Acreditar Pago
                             </button>
@@ -316,7 +316,7 @@ export const OrdersManager: React.FC = () => {
                           {order.status === 'paid' && (
                             <button
                               onClick={() => updateOrderStatus(order.id, 'preparing')}
-                              className="px-2.5 py-1 bg-[#364637] text-white rounded-lg text-[10px] font-bold"
+                              className="px-2.5 py-1 bg-[var(--brand-accent)] text-white rounded-lg text-[10px] font-bold"
                             >
                               Preparar
                             </button>
@@ -325,7 +325,7 @@ export const OrdersManager: React.FC = () => {
                           {order.status === 'preparing' && (
                             <button
                               onClick={() => updateOrderStatus(order.id, 'shipped')}
-                              className="px-2.5 py-1 bg-[#364637] text-white rounded-lg text-[10px] font-bold flex items-center gap-1"
+                              className="px-2.5 py-1 bg-[var(--brand-accent)] text-white rounded-lg text-[10px] font-bold flex items-center gap-1"
                             >
                               <Truck className="w-3 h-3" />
                               <span>Despachar</span>
@@ -344,7 +344,7 @@ export const OrdersManager: React.FC = () => {
 
       {/* Official Remito Modal */}
       {selectedOrderForRemito && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#141413]/75 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-2xl w-full p-5 sm:p-8 max-h-[92dvh] overflow-y-auto shadow-2xl border border-[#E2DFD7]">
             <div className="flex items-center justify-between pb-4 border-b border-[#E2DFD7] mb-5 no-print">
               <span className="text-xs font-bold text-[#6B675E] uppercase tracking-wider">
@@ -353,7 +353,7 @@ export const OrdersManager: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-1.5 bg-[#141413] hover:bg-[#364637] text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Imprimir</span>
@@ -367,21 +367,21 @@ export const OrdersManager: React.FC = () => {
               </div>
             </div>
 
-            <div className="border border-[#141413] p-5 rounded-xl">
+            <div className="border border-[var(--brand-primary)] p-5 rounded-xl">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E2DFD7] pb-4 mb-4">
                 <div>
                   <h2 className="text-2xl font-bold font-serif tracking-tight text-[#141413]">
                     {brandName}
                   </h2>
                   <p className="text-[10px] font-bold tracking-widest uppercase text-[#6B675E]">
-                    Tienda de Ropa · Indumentaria Contemporánea
+                    {companySettings?.legalName || companySettings?.tagline}
                   </p>
                   <p className="text-xs text-[#6B675E] mt-1">
                     {companySettings?.address}, {companySettings?.city} · CUIT: {companySettings?.cuit}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="inline-block border-2 border-[#141413] px-3 py-1 text-center mb-1">
+                  <div className="inline-block border-2 border-[var(--brand-primary)] px-3 py-1 text-center mb-1">
                     <span className="text-xl font-bold font-serif">R</span>
                     <span className="text-[9px] block uppercase font-bold">Documento no fiscal</span>
                   </div>
@@ -419,7 +419,7 @@ export const OrdersManager: React.FC = () => {
                   <span className="text-[#6B675E] block text-[11px]">
                     {selectedOrderForRemito.city}, {selectedOrderForRemito.province}
                   </span>
-                  <span className="text-[#364637] font-semibold block text-[11px] capitalize mt-0.5">
+                  <span className="text-[var(--brand-accent)] font-semibold block text-[11px] capitalize mt-0.5">
                     Modo: {selectedOrderForRemito.shippingMethod.replace('_', ' ')}
                   </span>
                 </div>

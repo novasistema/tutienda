@@ -40,3 +40,10 @@
     display: block !important;
   }
 }
+
+/* Colores de marca: se sobrescriben desde Configuración (ver App.tsx). */
+:root {
+  --brand-primary: #141413;
+  --brand-accent: #364637;
+  --brand-accent-dark: color-mix(in srgb, var(--brand-accent) 78%, black);
+}

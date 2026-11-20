@@ -28,13 +28,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email_verified == true;
     }
 
-    function isBootstrappedAdmin() {
-      return isVerifiedUser() && request.auth.token.email == 'ajnovasistemas@gmail.com';
-    }
-
+    // Los administradores de cada tienda se dan de alta en la colección /admins
+    // (ver README: scripts/crear-admin.mjs). No hay emails fijos en el código.
     function isAdmin() {
-      return isBootstrappedAdmin() ||
-        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      return isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // Validation Blueprints
@@ -44,7 +41,7 @@ service cloud.firestore {
         isValidId(data.id) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
         (!('hook' in data) || (data.hook is string && data.hook.size() <= 300)) &&
-        data.category in ['Remeras y Tops', 'Camisas y Blusas', 'Pantalones y Jeans', 'Abrigos y Tapados', 'Vestidos y Conjuntos', 'Accesorios y Calzado'] &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
         data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
         (!('code' in data) || (data.code is string && data.code.size() <= 64)) &&
         data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 100 &&
@@ -64,7 +61,7 @@ service cloud.firestore {
 
     function isValidOrder(data) {
       return data.keys().hasAll(['id', 'orderNumber', 'customerName', 'phone', 'shippingAddress', 'city', 'province', 'shippingMethod', 'paymentMethod', 'invoiceType', 'items', 'subtotal', 'total', 'status', 'createdAt']) &&
-        data.keys().hasOnly(['id', 'orderNumber', 'customerName', 'businessName', 'documentId', 'phone', 'email', 'shippingAddress', 'city', 'province', 'shippingMethod', 'shippingCost', 'paymentMethod', 'paymentDetails', 'invoiceType', 'items', 'subtotal', 'discount', 'taxAmount', 'total', 'status', 'notes', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'orderNumber', 'customerName', 'businessName', 'documentId', 'phone', 'email', 'shippingAddress', 'city', 'province', 'shippingMethod', 'shippingCost', 'paymentMethod', 'paymentDetails', 'invoiceType', 'items', 'subtotal', 'discount', 'taxAmount', 'total', 'status', 'notes', 'createdAt', 'createdAtIso', 'publicToken', 'stockRestored']) &&
         isValidId(data.id) &&
         data.orderNumber is string && data.orderNumber.size() >= 1 && data.orderNumber.size() <= 64 &&
         data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 160 &&
@@ -77,7 +74,7 @@ service cloud.firestore {
         data.province is string && data.province.size() >= 1 && data.province.size() <= 120 &&
         data.shippingMethod in ['transporte_expreso', 'retiro_deposito', 'correo_argentino'] &&
         (!('shippingCost' in data) || (data.shippingCost is number && data.shippingCost >= 0)) &&
-        data.paymentMethod in ['transferencia', 'tarjeta_segura', 'efectivo_deposito', 'acuerdo_comercial'] &&
+        data.paymentMethod in ['mercadopago', 'transferencia', 'tarjeta_segura', 'efectivo_deposito', 'acuerdo_comercial'] &&
         (!('paymentDetails' in data) || data.paymentDetails is map) &&
         data.invoiceType in ['A', 'B'] &&
         data.items is list && data.items.size() >= 1 && data.items.size() <= 100 && data.items[0] is map &&
@@ -87,7 +84,8 @@ service cloud.firestore {
         data.total is number && data.total >= 0 &&
         data.status in ['pending_payment', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'] &&
         (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000)) &&
-        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64;
+        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64 &&
+        (!('stockRestored' in data) || data.stockRestored is bool);
     }
 
     function isValidDeal(data) {
@@ -157,10 +155,14 @@ service cloud.firestore {
 
     function isValidCompanySettings(data) {
       return data.keys().hasAll(['companyName', 'legalName', 'cuit', 'cbu', 'alias']) &&
-        data.keys().hasOnly(['companyName', 'legalName', 'cuit', 'address', 'city', 'province', 'phone', 'email', 'minimumOrder', 'bankName', 'accountHolder', 'cbu', 'alias', 'cardPaymentsEnabled', 'installmentsAllowed', 'updatedAt']) &&
+        data.keys().hasOnly(['companyName', 'legalName', 'cuit', 'address', 'city', 'province', 'phone', 'email', 'minimumOrder', 'bankName', 'accountHolder', 'cbu', 'alias', 'cardPaymentsEnabled', 'installmentsAllowed', 'updatedAt',
+          'tagline', 'logoUrl', 'heroImageUrl', 'heroTitle', 'heroText', 'primaryColor', 'accentColor', 'instagramUrl', 'facebookUrl', 'orderPrefix',
+          'categories', 'bannerTexts', 'footerText', 'wholesaleEnabled', 'invoiceAEnabled', 'mercadoPagoEnabled', 'transferEnabled',
+          'shippingCorreoEnabled', 'shippingCorreoCost', 'shippingExpressEnabled', 'shippingExpressCost', 'pickupEnabled',
+          'pickupAddress', 'freeShippingFrom']) &&
         data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 120 &&
-        data.legalName is string && data.legalName.size() >= 1 && data.legalName.size() <= 160 &&
-        data.cuit is string && data.cuit.size() >= 4 && data.cuit.size() <= 40 &&
+        data.legalName is string && data.legalName.size() <= 160 &&
+        data.cuit is string && data.cuit.size() <= 40 &&
         (!('address' in data) || (data.address is string && data.address.size() <= 200)) &&
         (!('city' in data) || (data.city is string && data.city.size() <= 120)) &&
         (!('province' in data) || (data.province is string && data.province.size() <= 120)) &&
@@ -169,11 +171,35 @@ service cloud.firestore {
         (!('minimumOrder' in data) || (data.minimumOrder is number && data.minimumOrder >= 0)) &&
         (!('bankName' in data) || (data.bankName is string && data.bankName.size() <= 120)) &&
         (!('accountHolder' in data) || (data.accountHolder is string && data.accountHolder.size() <= 160)) &&
-        data.cbu is string && data.cbu.size() >= 4 && data.cbu.size() <= 40 &&
-        data.alias is string && data.alias.size() >= 2 && data.alias.size() <= 80 &&
+        data.cbu is string && data.cbu.size() <= 40 &&
+        data.alias is string && data.alias.size() <= 80 &&
         (!('cardPaymentsEnabled' in data) || data.cardPaymentsEnabled is bool) &&
         (!('installmentsAllowed' in data) || (data.installmentsAllowed is list && data.installmentsAllowed.size() <= 12 && (data.installmentsAllowed.size() == 0 || data.installmentsAllowed[0] is number))) &&
-        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64)) &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 120)) &&
+        (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 350000)) &&
+        (!('heroImageUrl' in data) || (data.heroImageUrl is string && data.heroImageUrl.size() <= 350000)) &&
+        (!('heroTitle' in data) || (data.heroTitle is string && data.heroTitle.size() <= 160)) &&
+        (!('heroText' in data) || (data.heroText is string && data.heroText.size() <= 400)) &&
+        (!('primaryColor' in data) || (data.primaryColor is string && data.primaryColor.matches('^#[0-9a-fA-F]{6}$'))) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.matches('^#[0-9a-fA-F]{6}$'))) &&
+        (!('instagramUrl' in data) || (data.instagramUrl is string && data.instagramUrl.size() <= 300)) &&
+        (!('facebookUrl' in data) || (data.facebookUrl is string && data.facebookUrl.size() <= 300)) &&
+        (!('orderPrefix' in data) || (data.orderPrefix is string && data.orderPrefix.size() <= 6)) &&
+        (!('categories' in data) || (data.categories is list && data.categories.size() <= 40)) &&
+        (!('bannerTexts' in data) || (data.bannerTexts is list && data.bannerTexts.size() <= 3)) &&
+        (!('footerText' in data) || (data.footerText is string && data.footerText.size() <= 300)) &&
+        (!('wholesaleEnabled' in data) || data.wholesaleEnabled is bool) &&
+        (!('invoiceAEnabled' in data) || data.invoiceAEnabled is bool) &&
+        (!('mercadoPagoEnabled' in data) || data.mercadoPagoEnabled is bool) &&
+        (!('transferEnabled' in data) || data.transferEnabled is bool) &&
+        (!('shippingCorreoEnabled' in data) || data.shippingCorreoEnabled is bool) &&
+        (!('shippingCorreoCost' in data) || (data.shippingCorreoCost is number && data.shippingCorreoCost >= 0)) &&
+        (!('shippingExpressEnabled' in data) || data.shippingExpressEnabled is bool) &&
+        (!('shippingExpressCost' in data) || (data.shippingExpressCost is number && data.shippingExpressCost >= 0)) &&
+        (!('pickupEnabled' in data) || data.pickupEnabled is bool) &&
+        (!('pickupAddress' in data) || (data.pickupAddress is string && data.pickupAddress.size() <= 200)) &&
+        (!('freeShippingFrom' in data) || (data.freeShippingFrom is number && data.freeShippingFrom >= 0));
     }
 
     // Public Catalog Products
@@ -189,11 +215,13 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow get: if isAdmin() && isValidId(orderId);
       allow list: if isAdmin();
-      allow create: if isValidId(orderId) && isValidOrder(incoming()) && incoming().id == orderId && (isAdmin() || incoming().status in ['pending_payment', 'paid']);
+      // Los pedidos de la tienda los crea el servidor (/api/orders) con precios recalculados.
+      // Desde el navegador solo un administrador puede cargar un pedido manual.
+      allow create: if isAdmin() && isValidId(orderId) && isValidOrder(incoming()) && incoming().id == orderId;
       allow update: if isAdmin() && isValidId(orderId) && isValidOrder(incoming()) &&
         incoming().id == existing().id &&
         incoming().createdAt == existing().createdAt &&
-        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes']);
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'stockRestored']);
       allow delete: if isAdmin() && isValidId(orderId);
     }
 
@@ -251,9 +279,20 @@ service cloud.firestore {
 
     // Authorized CRM Admins
     match /admins/{adminId} {
-      allow get: if isVerifiedUser() && (request.auth.uid == adminId || isBootstrappedAdmin());
-      allow list: if isBootstrappedAdmin();
-      allow create, update, delete: if isBootstrappedAdmin() && isValidId(adminId);
+      allow get: if isVerifiedUser() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && isValidId(adminId);
+    }
+
+    // Solicitudes del botón de arrepentimiento (las crea el servidor).
+    match /withdrawals/{withdrawalId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Contador de números de pedido (solo servidor).
+    match /counters/{counterId} {
+      allow read, write: if false;
     }
 
     // Connection test document

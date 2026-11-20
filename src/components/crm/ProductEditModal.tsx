@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Product, ProductSpec, ClothingCategory } from '../../types';
-import { CATALOG_CATEGORIES } from '../../data/products';
 import { formatCurrency } from '../../utils/formatters';
 import {
   ASSET_IMAGES,
@@ -56,7 +55,8 @@ export const ProductEditModal: React.FC = () => {
     closeProductEditModal,
     productToEdit,
     addProduct,
-    updateProduct
+    updateProduct,
+    companySettings
   } = useStore();
 
   const isEditing = Boolean(productToEdit);
@@ -65,10 +65,10 @@ export const ProductEditModal: React.FC = () => {
   // Form State
   const [name, setName] = useState('');
   const [hook, setHook] = useState('');
-  const [category, setCategory] = useState<ClothingCategory>('Remeras y Tops');
+  const [category, setCategory] = useState<ClothingCategory>('');
   const [sku, setSku] = useState('');
   const [code, setCode] = useState('');
-  const [brand, setBrand] = useState('TU TIENDA Atelier');
+  const [brand, setBrand] = useState((companySettings.companyName || ''));
   const [color, setColor] = useState('');
   const [material, setMaterial] = useState('');
   const [fit, setFit] = useState('');
@@ -100,7 +100,7 @@ export const ProductEditModal: React.FC = () => {
       setCategory(productToEdit.category);
       setSku(productToEdit.sku);
       setCode(productToEdit.code || '');
-      setBrand(productToEdit.brand || 'TU TIENDA Atelier');
+      setBrand(productToEdit.brand || (companySettings.companyName || ''));
       setColor(productToEdit.color || '');
       setMaterial(productToEdit.material || '');
       setFit(productToEdit.fit || '');
@@ -123,10 +123,10 @@ export const ProductEditModal: React.FC = () => {
       const randomSkuNum = Math.floor(100 + Math.random() * 900);
       setName('');
       setHook('');
-      setCategory('Remeras y Tops');
-      setSku(`TT-COL-${randomSkuNum}`);
+      setCategory(companySettings.categories?.[0] || 'General');
+      setSku(`${(companySettings.orderPrefix || 'SKU').toUpperCase()}-${randomSkuNum}`);
       setCode('');
-      setBrand('TU TIENDA Atelier');
+      setBrand((companySettings.companyName || ''));
       setColor('Negro Lavado');
       setMaterial('100% Algodón Peinado');
       setFit('Relaxed Fit');
@@ -257,7 +257,7 @@ export const ProductEditModal: React.FC = () => {
         category,
         sku: sku.trim().toUpperCase(),
         code: code.trim() || undefined,
-        brand: brand.trim() || 'TU TIENDA Atelier',
+        brand: brand.trim() || (companySettings.companyName || ''),
         color: color.trim() || undefined,
         material: material.trim() || undefined,
         fit: fit.trim() || undefined,
@@ -294,16 +294,16 @@ export const ProductEditModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6 bg-[#141413]/75 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
       <div
         className="bg-[#F8F7F4] rounded-t-3xl sm:rounded-3xl max-w-4xl w-full max-h-[92dvh] flex flex-col shadow-2xl border border-[#E2DFD7] overflow-hidden"
         role="dialog"
         aria-modal="true"
       >
         {/* Modal Header */}
-        <div className="bg-[#141413] text-[#F8F7F4] px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between border-b border-[#2A2A27]">
+        <div className="bg-[var(--brand-primary)] text-[#F8F7F4] px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between border-b border-[#2A2A27]">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#364637] text-[#F8F7F4] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[var(--brand-accent)] text-[#F8F7F4] flex items-center justify-center shrink-0">
               <Package className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -311,7 +311,7 @@ export const ProductEditModal: React.FC = () => {
                 <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F8F7F4]/10 text-[#E2DFD7] px-2 py-0.5 rounded">
                   {isEditing ? 'Edición de Prenda' : 'Nueva Prenda'}
                 </span>
-                <span className="text-xs text-[#9C988F]">TU TIENDA · Catálogo</span>
+                <span className="text-xs text-[#9C988F]">Catálogo</span>
               </div>
               <h2 className="text-base sm:text-xl font-bold text-white font-serif tracking-tight mt-0.5 truncate">
                 {isEditing ? productToEdit?.name : 'Cargar Nueva Prenda & Fotografía'}
@@ -346,7 +346,7 @@ export const ProductEditModal: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                   active
-                    ? 'bg-[#141413] text-[#F8F7F4]'
+                    ? 'bg-[var(--brand-primary)] text-[#F8F7F4]'
                     : 'text-[#6B675E] hover:bg-[#E2DFD7]/60 hover:text-[#141413]'
                 }`}
               >
@@ -381,7 +381,7 @@ export const ProductEditModal: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ej. Camisa Lino Belga Arena"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm font-semibold text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm font-semibold text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -394,7 +394,7 @@ export const ProductEditModal: React.FC = () => {
                     value={hook}
                     onChange={(e) => setHook(e.target.value)}
                     placeholder="Ej. Lino puro pre-lavado · Botones de nácar natural"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -405,9 +405,9 @@ export const ProductEditModal: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as ClothingCategory)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm font-semibold text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm font-semibold text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   >
-                    {CATALOG_CATEGORIES.filter((c) => c !== 'Todos').map((cat) => (
+                    {[...new Set([...(companySettings.categories || []), ...(category ? [category] : [])])].map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -424,8 +424,8 @@ export const ProductEditModal: React.FC = () => {
                     required
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    placeholder="TU TIENDA Atelier"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[#364637] outline-hidden"
+                    placeholder="Marca de la prenda"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -438,7 +438,7 @@ export const ProductEditModal: React.FC = () => {
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
                     placeholder="Ej. Negro Lavado, Arena, Oliva"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -451,7 +451,7 @@ export const ProductEditModal: React.FC = () => {
                     value={fit}
                     onChange={(e) => setFit(e.target.value)}
                     placeholder="Ej. Boxy Fit, Relaxed, Sastrero"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -464,7 +464,7 @@ export const ProductEditModal: React.FC = () => {
                     value={material}
                     onChange={(e) => setMaterial(e.target.value)}
                     placeholder="Ej. 100% Algodón Peinado 240g"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-sm text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -478,7 +478,7 @@ export const ProductEditModal: React.FC = () => {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="TT-REM-001"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white font-mono text-sm uppercase font-bold text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white font-mono text-sm uppercase font-bold text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
 
@@ -492,7 +492,7 @@ export const ProductEditModal: React.FC = () => {
                     required
                     value={stock}
                     onChange={(e) => setStock(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white font-mono text-sm font-bold text-[#141413] focus:border-[#364637] outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white font-mono text-sm font-bold text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                   />
                 </div>
               </div>
@@ -512,8 +512,8 @@ export const ProductEditModal: React.FC = () => {
                         onClick={() => handleToggleSize(sz)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold border transition-colors ${
                           selected
-                            ? 'bg-[#141413] text-[#F8F7F4] border-[#141413]'
-                            : 'bg-white text-[#6B675E] border-[#D4D0C7] hover:border-[#141413]'
+                            ? 'bg-[var(--brand-primary)] text-[#F8F7F4] border-[var(--brand-primary)]'
+                            : 'bg-white text-[#6B675E] border-[#D4D0C7] hover:border-[var(--brand-primary)]'
                         }`}
                       >
                         {sz}
@@ -533,7 +533,7 @@ export const ProductEditModal: React.FC = () => {
                       }
                     }}
                     placeholder="Agregar otro talle (ej. 48 o 36)..."
-                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[#364637]"
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[var(--brand-accent)]"
                   />
                   <button
                     type="button"
@@ -552,7 +552,7 @@ export const ProductEditModal: React.FC = () => {
                     type="checkbox"
                     checked={featured}
                     onChange={(e) => setFeatured(e.target.checked)}
-                    className="w-4 h-4 accent-[#364637]"
+                    className="w-4 h-4 accent-[var(--brand-accent)]"
                   />
                   <span className="text-xs font-bold text-[#141413]">Destacar en colección</span>
                 </label>
@@ -562,7 +562,7 @@ export const ProductEditModal: React.FC = () => {
                     type="checkbox"
                     checked={isNew}
                     onChange={(e) => setIsNew(e.target.checked)}
-                    className="w-4 h-4 accent-[#364637]"
+                    className="w-4 h-4 accent-[var(--brand-accent)]"
                   />
                   <span className="text-xs font-bold text-[#141413]">Etiquetar como "Nuevo Ingreso"</span>
                 </label>
@@ -602,12 +602,12 @@ export const ProductEditModal: React.FC = () => {
                       }
                     }}
                     placeholder="Ej. 100% Lino, Edición Atelier..."
-                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[#364637]"
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[var(--brand-accent)]"
                   />
                   <button
                     type="button"
                     onClick={handleAddBadge}
-                    className="px-3.5 py-2 bg-[#141413] text-[#F8F7F4] rounded-xl text-xs font-bold"
+                    className="px-3.5 py-2 bg-[var(--brand-primary)] text-[#F8F7F4] rounded-xl text-xs font-bold"
                   >
                     Agregar
                   </button>
@@ -631,7 +631,7 @@ export const ProductEditModal: React.FC = () => {
 
                 <div className="w-12 h-12 rounded-2xl bg-[#EFECE6] text-[#141413] mx-auto flex items-center justify-center">
                   {isUploadingImage ? (
-                    <Loader2 className="w-6 h-6 animate-spin text-[#364637]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[var(--brand-accent)]" />
                   ) : (
                     <Upload className="w-6 h-6" />
                   )}
@@ -651,14 +651,14 @@ export const ProductEditModal: React.FC = () => {
                     type="button"
                     disabled={isUploadingImage}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2.5 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                    className="px-4 py-2.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
                   >
                     <Camera className="w-4 h-4" />
                     <span>{isUploadingImage ? 'Optimizando foto...' : 'Elegir Foto o Usar Cámara'}</span>
                   </button>
 
                   {imageSizeKb !== null && (
-                    <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[#364637] bg-[#EFECE6] px-3 py-1.5 rounded-xl">
+                    <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[var(--brand-accent)] bg-[#EFECE6] px-3 py-1.5 rounded-xl">
                       <Check className="w-3.5 h-3.5" />
                       Foto cargada ({imageSizeKb} KB)
                     </span>
@@ -683,14 +683,14 @@ export const ProductEditModal: React.FC = () => {
                       ? 'Fotografía subida desde archivo local (lista para guardar)'
                       : 'https://...'
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-xs font-mono text-[#141413] focus:border-[#364637] outline-hidden"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D4D0C7] bg-white text-xs font-mono text-[#141413] focus:border-[var(--brand-accent)] outline-hidden"
                 />
               </div>
 
               {/* Studio Presets */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B675E] mb-2">
-                  O usar fotografía base del Estudio TU TIENDA:
+                  O usar fotografía base del estudio:
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {PRESET_IMAGES.map((preset, idx) => (
@@ -703,7 +703,7 @@ export const ProductEditModal: React.FC = () => {
                       }}
                       className={`p-2 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
                         image === preset.url
-                          ? 'border-[#141413] bg-white ring-2 ring-[#141413]/15'
+                          ? 'border-[var(--brand-primary)] bg-white ring-2 ring-[var(--brand-primary)]/15'
                           : 'border-[#E2DFD7] bg-white/70 hover:bg-white'
                       }`}
                     >
@@ -746,7 +746,7 @@ export const ProductEditModal: React.FC = () => {
               <div className="bg-[#EFECE6] border border-[#E2DFD7] rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="text-xs font-bold text-[#141413] uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-[#364637]" />
+                    <Sparkles className="w-4 h-4 text-[var(--brand-accent)]" />
                     Precios por Prenda y Pack
                   </h4>
                   <p className="text-xs text-[#6B675E] mt-0.5">
@@ -756,7 +756,7 @@ export const ProductEditModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCalculateTiers}
-                  className="px-3.5 py-2 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
                 >
                   <Calculator className="w-3.5 h-3.5" />
                   <span>Sugerir Escala (-8% / -15%)</span>
@@ -764,7 +764,7 @@ export const ProductEditModal: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-[#141413] text-[#F8F7F4] rounded-2xl p-4">
+                <div className="bg-[var(--brand-primary)] text-[#F8F7F4] rounded-2xl p-4">
                   <div className="text-[10px] uppercase font-bold tracking-wider text-[#9C988F] mb-1">
                     Precio por Unidad (1 a 4 u.) *
                   </div>
@@ -797,7 +797,7 @@ export const ProductEditModal: React.FC = () => {
                       className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#F8F7F4] border border-[#D4D0C7] font-mono text-base font-bold text-[#141413] outline-hidden"
                     />
                   </div>
-                  <span className="text-[11px] text-[#364637] font-semibold block mt-1.5">
+                  <span className="text-[11px] text-[var(--brand-accent)] font-semibold block mt-1.5">
                     {priceUnit > 0 && tier5 > 0
                       ? `-${Math.round((1 - tier5 / priceUnit) * 100)}% ahorro`
                       : 'Opcional'}
@@ -819,7 +819,7 @@ export const ProductEditModal: React.FC = () => {
                       className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#F8F7F4] border border-[#D4D0C7] font-mono text-base font-bold text-[#141413] outline-hidden"
                     />
                   </div>
-                  <span className="text-[11px] text-[#364637] font-semibold block mt-1.5">
+                  <span className="text-[11px] text-[var(--brand-accent)] font-semibold block mt-1.5">
                     {priceUnit > 0 && tier10 > 0
                       ? `-${Math.round((1 - tier10 / priceUnit) * 100)}% ahorro`
                       : 'Opcional'}
@@ -832,7 +832,7 @@ export const ProductEditModal: React.FC = () => {
                   Resumen visible en tienda:
                 </h4>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-[#141413] text-[#F8F7F4] rounded-xl p-2.5">
+                  <div className="bg-[var(--brand-primary)] text-[#F8F7F4] rounded-xl p-2.5">
                     <span className="text-[10px] uppercase block opacity-80">Precio Lista</span>
                     <span className="text-xs sm:text-sm font-bold font-mono">{formatCurrency(priceUnit, false)}</span>
                   </div>
@@ -844,7 +844,7 @@ export const ProductEditModal: React.FC = () => {
                   </div>
                   <div className="bg-[#EFECE6] rounded-xl p-2.5">
                     <span className="text-[10px] uppercase text-[#6B675E] block">10+ Prendas</span>
-                    <span className="text-xs sm:text-sm font-bold font-mono text-[#364637]">
+                    <span className="text-xs sm:text-sm font-bold font-mono text-[var(--brand-accent)]">
                       {tier10 > 0 ? formatCurrency(tier10, false) : '-'}
                     </span>
                   </div>
@@ -859,7 +859,7 @@ export const ProductEditModal: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-                    <Scissors className="w-4 h-4 text-[#364637]" />
+                    <Scissors className="w-4 h-4 text-[var(--brand-accent)]" />
                     Detalles de Tela & Confección
                   </h4>
                   <p className="text-xs text-[#6B675E]">
@@ -869,7 +869,7 @@ export const ProductEditModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAddSpec}
-                  className="px-3 py-1.5 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Agregar Detalle</span>
@@ -882,7 +882,7 @@ export const ProductEditModal: React.FC = () => {
                     key={index}
                     className="p-3.5 bg-white rounded-2xl border border-[#E2DFD7] flex flex-col sm:flex-row items-start sm:items-center gap-3"
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#141413] text-[#F8F7F4] font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--brand-primary)] text-[#F8F7F4] font-mono font-bold text-xs flex items-center justify-center shrink-0">
                       {index + 1}
                     </div>
 
@@ -957,7 +957,7 @@ export const ProductEditModal: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving || isUploadingImage}
-              className="px-6 py-3 bg-[#141413] hover:bg-[#364637] disabled:opacity-50 text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+              className="px-6 py-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] disabled:opacity-50 text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors"
             >
               <Save className="w-4 h-4" />
               <span>

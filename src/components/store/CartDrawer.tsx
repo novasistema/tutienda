@@ -19,11 +19,11 @@ export const CartDrawer: React.FC = () => {
 
   if (!isCartOpen) return null;
 
-  const brandTitle = companySettings?.companyName || 'TU TIENDA';
-  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '5491149821100';
+  const brandTitle = companySettings?.companyName || 'Mi Tienda';
+  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '';
 
   const generateOrderMessage = () => {
-    let msg = `*NUEVO PEDIDO - ${brandTitle} (Tienda de Ropa)*\n`;
+    let msg = `*NUEVO PEDIDO - ${brandTitle} *\n`;
     msg += `------------------------------------\n`;
     cart.forEach((item, index) => {
       msg += `${index + 1}. *${item.product.name}* (Talle: ${item.selectedSize || 'Único'})\n`;
@@ -41,7 +41,7 @@ export const CartDrawer: React.FC = () => {
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div
         onClick={() => setIsCartOpen(false)}
-        className="absolute inset-0 bg-[#141413]/60 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-[var(--brand-primary)]/60 backdrop-blur-xs transition-opacity"
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
@@ -49,7 +49,7 @@ export const CartDrawer: React.FC = () => {
           {/* Drawer Header */}
           <div className="p-4 sm:p-5 border-b border-[#EFECE6] bg-[#FAF9F6] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <ShoppingBag className="w-4 h-4 text-[#364637]" />
+              <ShoppingBag className="w-4 h-4 text-[var(--brand-accent)]" />
               <div>
                 <h3 className="font-serif font-semibold text-[#141413] text-lg leading-none">
                   Mi Bolsa · {brandTitle}
@@ -86,7 +86,7 @@ export const CartDrawer: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
             {cart.length === 0 ? (
               <div className="text-center py-16 px-4 space-y-3">
-                <div className="w-14 h-14 bg-[#EFECE6] text-[#364637] mx-auto flex items-center justify-center">
+                <div className="w-14 h-14 bg-[#EFECE6] text-[var(--brand-accent)] mx-auto flex items-center justify-center">
                   <ShoppingBag className="w-6 h-6" />
                 </div>
                 <h4 className="font-serif font-semibold text-[#141413] text-lg">Tu bolsa está vacía</h4>
@@ -96,7 +96,7 @@ export const CartDrawer: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsCartOpen(false)}
-                  className="mt-2 px-5 py-2.5 bg-[#141413] hover:bg-[#364637] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                  className="mt-2 px-5 py-2.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   Ver Colección
                 </button>
@@ -194,21 +194,23 @@ export const CartDrawer: React.FC = () => {
                     setIsCartOpen(false);
                     setIsCheckoutOpen(true);
                   }}
-                  className="w-full py-3.5 px-4 bg-[#141413] hover:bg-[#364637] text-white font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-3.5 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <span>Finalizar Compra</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
-                <a
+                {companyPhone && (
+                  <a
                   href={whatsAppLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 px-4 bg-white hover:bg-[#EFECE6] text-[#141413] border border-[#D8D4CB] font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#364637]" />
+                  <MessageCircle className="w-4 h-4 text-[var(--brand-accent)]" />
                   <span>Enviar Pedido por WhatsApp</span>
                 </a>
+                )}
               </div>
             </div>
           )}

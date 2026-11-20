@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { DEMO_MODE } from '../../config';
 import { CrmNotification } from '../../types';
 import { formatCurrency, generateWhatsAppLink } from '../../utils/formatters';
 import {
@@ -42,7 +43,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
     companySettings
   } = useStore();
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'orders' | 'urgent' | 'unread'>('all');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -92,7 +93,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`relative p-2 rounded-xl transition-all flex items-center justify-center border ${
           isOpen
-            ? 'bg-[#364637] text-white border-[#364637]'
+            ? 'bg-[var(--brand-accent)] text-white border-[var(--brand-accent)]'
             : 'bg-white/10 hover:bg-white/20 text-[#F8F7F4] border-white/15'
         }`}
         title="Centro de Alertas"
@@ -102,7 +103,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
         {unreadNotificationsCount > 0 && (
           <span
             className={`absolute -top-1 -right-1 px-1 min-w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center text-white ${
-              urgentNotificationsCount > 0 ? 'bg-red-600' : 'bg-[#364637]'
+              urgentNotificationsCount > 0 ? 'bg-red-600' : 'bg-[var(--brand-accent)]'
             }`}
           >
             {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
@@ -112,7 +113,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
 
       {isOpen && (
         <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-96 max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-[#E2DFD7] z-50 flex flex-col overflow-hidden">
-          <div className="bg-[#141413] text-[#F8F7F4] p-3.5 border-b border-[#2A2A27] flex items-center justify-between">
+          <div className="bg-[var(--brand-primary)] text-[#F8F7F4] p-3.5 border-b border-[#2A2A27] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-[#C6B79E]" />
               <div>
@@ -138,15 +139,16 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
             </div>
           </div>
 
+          {DEMO_MODE && (
           <div className="bg-[#EFECE6] px-3.5 py-2 border-b border-[#E2DFD7] flex items-center justify-between text-xs gap-2">
             <span className="text-[11px] text-[#6B675E] font-medium flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-[#364637]" />
+              <Sparkles className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
               Probar alerta:
             </span>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => simulateIncomingOrder()}
-                className="px-2 py-1 bg-white hover:bg-[#141413] hover:text-white text-[#141413] border border-[#D4D0C7] rounded-lg text-[10px] font-bold flex items-center gap-1"
+                className="px-2 py-1 bg-white hover:bg-[var(--brand-primary)] hover:text-white text-[#141413] border border-[#D4D0C7] rounded-lg text-[10px] font-bold flex items-center gap-1"
               >
                 <Package className="w-3 h-3" />
                 <span>+ Pedido</span>
@@ -160,6 +162,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
               </button>
             </div>
           </div>
+          )}
 
           <div className="px-3 py-2 bg-[#F8F7F4] border-b border-[#E2DFD7] flex items-center justify-between gap-1 overflow-x-auto no-scrollbar text-[11px]">
             <div className="flex items-center gap-1">
@@ -174,7 +177,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
                   onClick={() => setFilter(item.key as typeof filter)}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-colors whitespace-nowrap ${
                     filter === item.key
-                      ? 'bg-[#141413] text-white'
+                      ? 'bg-[var(--brand-primary)] text-white'
                       : 'text-[#6B675E] hover:bg-[#EFECE6]'
                   }`}
                 >
@@ -185,7 +188,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
             {notifications.length > 0 && (
               <button
                 onClick={markAllNotificationsAsRead}
-                className="text-[10px] text-[#364637] font-bold flex items-center gap-1 shrink-0"
+                className="text-[10px] text-[var(--brand-accent)] font-bold flex items-center gap-1 shrink-0"
               >
                 <CheckCheck className="w-3 h-3" />
                 <span>Leer todo</span>
@@ -216,7 +219,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
                         isUrgent
                           ? 'bg-red-100 text-red-700'
                           : isOrder
-                          ? 'bg-[#EFECE6] text-[#364637]'
+                          ? 'bg-[#EFECE6] text-[var(--brand-accent)]'
                           : 'bg-zinc-100 text-zinc-700'
                       }`}
                     >
@@ -256,7 +259,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
                         {isOrder && (
                           <button
                             onClick={() => handleActionClick(notif)}
-                            className="px-2.5 py-1 bg-[#141413] text-white rounded-lg text-[10px] font-bold"
+                            className="px-2.5 py-1 bg-[var(--brand-primary)] text-white rounded-lg text-[10px] font-bold"
                           >
                             Ver Pedido
                           </button>
@@ -276,7 +279,7 @@ export const CrmNotificationCenter: React.FC<CrmNotificationCenterProps> = ({
                           </a>
                         )}
                         {notif.metadata?.total && (
-                          <span className="text-[10px] font-mono font-bold text-[#364637]">
+                          <span className="text-[10px] font-mono font-bold text-[var(--brand-accent)]">
                             {formatCurrency(notif.metadata.total)}
                           </span>
                         )}
@@ -349,12 +352,12 @@ export const CrmToastAlert: React.FC<{
         className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 ${
           isUrgent
             ? 'bg-red-950 text-white border-red-800'
-            : 'bg-[#141413] text-[#F8F7F4] border-[#2A2A27]'
+            : 'bg-[var(--brand-primary)] text-[#F8F7F4] border-[#2A2A27]'
         }`}
       >
         <div
           className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${
-            isUrgent ? 'bg-red-600 text-white' : 'bg-[#364637] text-white'
+            isUrgent ? 'bg-red-600 text-white' : 'bg-[var(--brand-accent)] text-white'
           }`}
         >
           {isUrgent ? <AlertTriangle className="w-4 h-4" /> : <Package className="w-4 h-4" />}

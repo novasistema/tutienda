@@ -30,7 +30,7 @@ export const ClientsDirectory: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedClientDetail, setSelectedClientDetail] = useState<Client | null>(null);
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
 
   const [interactionType, setInteractionType] = useState<Interaction['type']>('whatsapp');
   const [interactionNote, setInteractionNote] = useState('');
@@ -120,7 +120,7 @@ export const ClientsDirectory: React.FC = () => {
     switch (tier) {
       case 'Distribuidor':
         return (
-          <span className="bg-[#141413] text-[#F8F7F4] text-[10px] font-bold px-2 py-0.5 rounded">
+          <span className="bg-[var(--brand-primary)] text-[#F8F7F4] text-[10px] font-bold px-2 py-0.5 rounded">
             VIP Boutique
           </span>
         );
@@ -138,7 +138,7 @@ export const ClientsDirectory: React.FC = () => {
         );
       default:
         return (
-          <span className="bg-[#364637]/10 text-[#364637] border border-[#364637]/20 text-[10px] font-bold px-2 py-0.5 rounded">
+          <span className="bg-[var(--brand-accent)]/10 text-[var(--brand-accent)] border border-[var(--brand-accent)]/20 text-[10px] font-bold px-2 py-0.5 rounded">
             Particular
           </span>
         );
@@ -179,13 +179,13 @@ export const ClientsDirectory: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cliente o ciudad..."
-              className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-white outline-hidden focus:border-[#364637]"
+              className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-white outline-hidden focus:border-[var(--brand-accent)]"
             />
           </div>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-3.5 py-2 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
+            className="px-3.5 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nuevo Cliente</span>
@@ -207,7 +207,7 @@ export const ClientsDirectory: React.FC = () => {
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div onClick={() => setSelectedClientDetail(client)} className="cursor-pointer">
-                    <h4 className="text-sm font-bold text-[#141413] hover:text-[#364637] transition-colors">
+                    <h4 className="text-sm font-bold text-[#141413] hover:text-[var(--brand-accent)] transition-colors">
                       {client.name}
                     </h4>
                     <p className="text-xs text-[#6B675E] font-medium mt-0.5">
@@ -265,7 +265,7 @@ export const ClientsDirectory: React.FC = () => {
               <div className="mt-4 pt-3 border-t border-[#E2DFD7] flex items-center justify-between gap-2">
                 <button
                   onClick={() => setSelectedClientDetail(client)}
-                  className="text-xs font-bold text-[#141413] hover:text-[#364637] flex items-center gap-1 transition-colors"
+                  className="text-xs font-bold text-[#141413] hover:text-[var(--brand-accent)] flex items-center gap-1 transition-colors"
                 >
                   <History className="w-3.5 h-3.5" />
                   <span>Historial y Notas</span>
@@ -288,7 +288,7 @@ export const ClientsDirectory: React.FC = () => {
 
       {/* Customer Detail Modal */}
       {selectedClientDetail && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#141413]/75 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92dvh] overflow-y-auto shadow-2xl border border-[#E2DFD7]">
             <div className="p-5 border-b border-[#E2DFD7] flex items-center justify-between sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
@@ -332,7 +332,7 @@ export const ClientsDirectory: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[10px] text-[#6B675E] uppercase font-bold block">Total Histórico:</span>
-                  <strong className="text-[#364637] font-mono font-bold">
+                  <strong className="text-[var(--brand-accent)] font-mono font-bold">
                     {formatCurrency(selectedClientDetail.totalSpent, false)}
                   </strong>
                 </div>
@@ -341,7 +341,7 @@ export const ClientsDirectory: React.FC = () => {
               {/* Order History */}
               <div className="space-y-2.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-[#364637]" />
+                  <Package className="w-4 h-4 text-[var(--brand-accent)]" />
                   <span>Historial de Pedidos ({clientOrders.length})</span>
                 </h4>
 
@@ -379,7 +379,7 @@ export const ClientsDirectory: React.FC = () => {
               {/* Interactions */}
               <div className="space-y-3 pt-3 border-t border-[#E2DFD7]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-                  <History className="w-4 h-4 text-[#364637]" />
+                  <History className="w-4 h-4 text-[var(--brand-accent)]" />
                   <span>Notas de Atención ({clientInteractions.length})</span>
                 </h4>
 
@@ -409,11 +409,11 @@ export const ClientsDirectory: React.FC = () => {
                       value={interactionNote}
                       onChange={(e) => setInteractionNote(e.target.value)}
                       placeholder="Ej. Prefiere talle M en camisas y tonos neutros..."
-                      className="flex-1 text-xs p-2.5 rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[#364637]"
+                      className="flex-1 text-xs p-2.5 rounded-xl border border-[#D4D0C7] bg-white outline-hidden focus:border-[var(--brand-accent)]"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-[#141413] hover:bg-[#364637] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                      className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Guardar</span>
@@ -460,7 +460,7 @@ export const ClientsDirectory: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="font-bold uppercase tracking-wider text-[#364637]">
+                          <span className="font-bold uppercase tracking-wider text-[var(--brand-accent)]">
                             {item.type}
                           </span>
                           <span className="text-[#6B675E] font-mono text-[10px]">{item.createdAt}</span>
@@ -479,7 +479,7 @@ export const ClientsDirectory: React.FC = () => {
 
       {/* Add Client Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#141413]/75 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#E2DFD7]">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2DFD7] mb-4">
               <h3 className="font-bold text-[#141413] font-serif text-base">
@@ -503,7 +503,7 @@ export const ClientsDirectory: React.FC = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Ej. Sofía Méndez"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
                 <div>
@@ -513,7 +513,7 @@ export const ClientsDirectory: React.FC = () => {
                     value={form.businessName}
                     onChange={(e) => setForm({ ...form, businessName: e.target.value })}
                     placeholder="Ej. Compra Particular o Boutique"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
               </div>
@@ -527,7 +527,7 @@ export const ClientsDirectory: React.FC = () => {
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="+54 9 11 ..."
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
                 <div>
@@ -537,7 +537,7 @@ export const ClientsDirectory: React.FC = () => {
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
                     placeholder="Ej. Palermo, CABA"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
               </div>
@@ -549,7 +549,7 @@ export const ClientsDirectory: React.FC = () => {
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="Talles habituales, estilo preferido..."
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
 
@@ -563,7 +563,7 @@ export const ClientsDirectory: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl"
+                  className="px-5 py-2 text-xs font-bold bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl"
                 >
                   Guardar Cliente
                 </button>

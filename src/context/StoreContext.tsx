@@ -20,14 +20,24 @@ import {
   INITIAL_INTERACTIONS,
   INITIAL_NOTIFICATIONS
 } from '../data/crmMockData';
-import { DEFAULT_COMPANY_SETTINGS } from '../data/defaultSettings';
+import { DEFAULT_COMPANY_SETTINGS, withSettingsDefaults } from '../data/defaultSettings';
 import { calculateUnitPrice, formatCurrency } from '../utils/formatters';
+import { DEMO_MODE } from '../config';
+import { navigate, productIdFromPath, usePathname } from '../utils/router';
+import { trackEvent } from '../utils/analytics';
+import {
+  formatOrderNumber,
+  shippingOptionsFor,
+  taxFor,
+  type CheckoutPaymentMethod,
+  type ShippingMethod
+} from '../../shared/commerce';
 import { playNotificationSound } from '../utils/sound';
 import { resolveProductImage } from '../utils/imageUtils';
 import { auth, testConnection } from '../firebase';
 import {
   checkIsAuthorizedAdmin,
-  seedInitialDataIfEmpty,
+  restoreStockForOrder,
   subscribeToProducts,
   subscribeToOrders,
   subscribeToDeals,
@@ -57,6 +67,30 @@ interface CrmUser {
   isDemo: boolean;
 }
 
+export interface CheckoutInput {
+  customer: {
+    name: string;
+    businessName?: string;
+    documentId?: string;
+    phone: string;
+    email?: string;
+    address: string;
+    city: string;
+    province: string;
+    notes?: string;
+  };
+  invoiceType: 'A' | 'B';
+  shippingMethod: ShippingMethod;
+  paymentMethod: CheckoutPaymentMethod;
+}
+
+export interface PlaceOrderResult {
+  order: Order;
+  /** Link de pago de Mercado Pago (si corresponde). */
+  paymentUrl: string | null;
+  token?: string;
+}
+
 interface StoreContextType {
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
@@ -80,7 +114,8 @@ interface StoreContextType {
   clients: Client[];
   addClient: (client: Omit<Client, 'id' | 'totalSpent' | 'orderCount' | 'lastContact'>) => Promise<void>;
   orders: Order[];
-  placeOrder: (orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt'>) => Promise<Order>;
+  placeOrder: (input: CheckoutInput) => Promise<PlaceOrderResult>;
+  productsLoading: boolean;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   interactions: Interaction[];
   addInteraction: (data: Omit<Interaction, 'id' | 'createdAt'>) => Promise<void>;
@@ -138,34 +173,28 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-const SETTINGS_STORAGE_KEY = 'tutienda_settings_v2';
 const CART_STORAGE_KEY = 'tutienda_cart_v2';
 const DEMO_STORAGE_KEY = 'tutienda_demo_auth_v2';
 const SOUND_STORAGE_KEY = 'tutienda_crm_sound_v2';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [deals, setDeals] = useState<Deal[]>(INITIAL_DEALS);
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [interactions, setInteractions] = useState<Interaction[]>(INITIAL_INTERACTIONS);
-  const [notifications, setNotifications] = useState<CrmNotification[]>(INITIAL_NOTIFICATIONS);
+  // Los datos de ejemplo solo se usan en el sitio de demostración (VITE_DEMO_MODE=true).
+  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS : []);
+  const [productsLoading, setProductsLoading] = useState<boolean>(true);
+  const [deals, setDeals] = useState<Deal[]>(DEMO_MODE ? INITIAL_DEALS : []);
+  const [clients, setClients] = useState<Client[]>(DEMO_MODE ? INITIAL_CLIENTS : []);
+  const [orders, setOrders] = useState<Order[]>(DEMO_MODE ? INITIAL_ORDERS : []);
+  const [interactions, setInteractions] = useState<Interaction[]>(DEMO_MODE ? INITIAL_INTERACTIONS : []);
+  const [notifications, setNotifications] = useState<CrmNotification[]>(DEMO_MODE ? INITIAL_NOTIFICATIONS : []);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
 
-  const [companySettings, setCompanySettings] = useState<CompanySettings>(() => {
-    try {
-      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : DEFAULT_COMPANY_SETTINGS;
-    } catch {
-      return DEFAULT_COMPANY_SETTINGS;
-    }
-  });
+  const [companySettings, setCompanySettings] = useState<CompanySettings>(DEFAULT_COMPANY_SETTINGS);
 
   // Auth states: Firebase Admin OR Prospective Client Demo Mode
   const [isFirebaseAdmin, setIsFirebaseAdmin] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(DEMO_STORAGE_KEY) === 'true';
+      return DEMO_MODE && localStorage.getItem(DEMO_STORAGE_KEY) === 'true';
     } catch {
       return false;
     }
@@ -174,7 +203,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [authError, setAuthError] = useState<string | null>(null);
   const [crmUser, setCrmUser] = useState<CrmUser | null>(() => {
     try {
-      if (localStorage.getItem(DEMO_STORAGE_KEY) === 'true') {
+      if (DEMO_MODE && localStorage.getItem(DEMO_STORAGE_KEY) === 'true') {
         return {
           name: 'Cliente Demo',
           email: 'demo@tutienda.com.ar',
@@ -192,6 +221,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const loginDemo = (username: string, password: string): boolean => {
     setAuthError(null);
+    if (!DEMO_MODE) {
+      setAuthError('El acceso de demostración no está habilitado en esta tienda.');
+      return false;
+    }
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
 
@@ -228,7 +261,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!authorized) {
         await signOut(auth);
         setAuthError(
-          `La cuenta ${cred.user.email || ''} no está autorizada como administrador en Firestore. Podés ingresar con el Acceso Demo o elegir una cuenta autorizada.`
+          `La cuenta ${cred.user.email || ''} no está autorizada como administradora de esta tienda. Pedile al responsable del sistema que la habilite.`
         );
         return false;
       }
@@ -298,8 +331,41 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [activeToastNotification]);
 
   // UI state
-  const [activeTab, setActiveTab] = useState<'store' | 'crm' | 'quotation'>('store');
-  const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
+  // Navegación sincronizada con la URL: /admin abre el panel y /producto/:id abre una prenda.
+  const pathname = usePathname();
+  const [activeTab, setActiveTabState] = useState<'store' | 'crm' | 'quotation'>(() =>
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') ? 'crm' : 'store'
+  );
+  const [selectedProductForModal, setSelectedProductState] = useState<Product | null>(null);
+
+  const setActiveTab = (tab: 'store' | 'crm' | 'quotation') => {
+    setActiveTabState(tab);
+    navigate(tab === 'store' ? '/' : '/admin');
+  };
+
+  const setSelectedProductForModal = (product: Product | null) => {
+    setSelectedProductState(product);
+    if (product && activeTab === 'store') {
+      navigate(`/producto/${encodeURIComponent(product.id)}`);
+    } else if (!product && productIdFromPath(window.location.pathname)) {
+      navigate('/');
+    }
+  };
+
+  useEffect(() => {
+    if (pathname.startsWith('/admin')) {
+      setActiveTabState((t) => (t === 'store' ? 'crm' : t));
+      return;
+    }
+    setActiveTabState('store');
+    const productId = productIdFromPath(pathname);
+    if (!productId) {
+      setSelectedProductState(null);
+      return;
+    }
+    const found = products.find((p) => p.id === productId);
+    if (found) setSelectedProductState(found);
+  }, [pathname, products]);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [isProductEditModalOpen, setIsProductEditModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -333,7 +399,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (connected) {
         unsubProds = subscribeToProducts((prods) => {
-          if (active) setProducts(prods);
+          if (!active) return;
+          // En la demo, si la base está vacía, se muestran las prendas de ejemplo.
+          setProducts(DEMO_MODE && prods.length === 0 ? INITIAL_PRODUCTS : prods);
+          setProductsLoading(false);
         });
         unsubSettings = subscribeToSettings((sets) => {
           if (active) setCompanySettings(sets);
@@ -341,7 +410,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
-    initPublic();
+    initPublic().finally(() => {
+      if (active) setTimeout(() => active && setProductsLoading(false), 4000);
+    });
 
     return () => {
       active = false;
@@ -370,14 +441,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setIsDemoMode(false);
           localStorage.removeItem(DEMO_STORAGE_KEY);
           setCrmUser({
-            name: firebaseUser.displayName || 'Administrador TU TIENDA',
+            name: firebaseUser.displayName || 'Administrador',
             email: firebaseUser.email || '',
             role: 'Administrador General',
             isDemo: false
           });
           setAuthLoading(false);
-
-          await seedInitialDataIfEmpty();
 
           crmUnsubs = [
             subscribeToOrders(setOrders),
@@ -391,7 +460,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       setIsFirebaseAdmin(false);
-      if (localStorage.getItem(DEMO_STORAGE_KEY) === 'true') {
+      if (DEMO_MODE && localStorage.getItem(DEMO_STORAGE_KEY) === 'true') {
         setIsDemoMode(true);
         setCrmUser({
           name: 'Cliente Demo',
@@ -412,12 +481,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    try {
+      // Las fotos subidas se guardan como texto largo: no se copian al carrito local para no llenar el navegador.
+      const light = cart.map((i) => ({
+        ...i,
+        product: { ...i.product, image: i.product.image?.startsWith('data:') ? '' : i.product.image }
+      }));
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(light));
+    } catch {
+      /* almacenamiento lleno o bloqueado: el carrito sigue funcionando en memoria */
+    }
   }, [cart]);
 
+  // Al actualizarse el catálogo, el carrito toma la foto y el precio vigentes de cada prenda.
+  useEffect(() => {
+    if (products.length === 0) return;
+    setCart((prev) => {
+      let changed = false;
+      const next = prev.map((item) => {
+        const fresh = products.find((p) => p.id === item.product.id);
+        if (!fresh || fresh === item.product) return item;
+        changed = true;
+        const unitPriceApplied = calculateUnitPrice(fresh, item.quantity, !!companySettings.wholesaleEnabled);
+        return { ...item, product: fresh, unitPriceApplied, totalPrice: unitPriceApplied * item.quantity };
+      });
+      return changed ? next : prev;
+    });
+  }, [products, companySettings.wholesaleEnabled]);
+
   const updateCompanySettings = async (newSettings: CompanySettings) => {
-    setCompanySettings(newSettings);
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+    setCompanySettings(withSettingsDefaults(newSettings));
     if (isFirebaseAdmin) {
       await saveSettingsToFirestore(newSettings);
     }
@@ -431,7 +524,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         (item) => item.product.id === product.id && (item.selectedSize || 'Único') === resolvedSize
       );
       const newQuantity = existing ? existing.quantity + quantity : quantity;
-      const unitPriceApplied = calculateUnitPrice(product, newQuantity);
+      const unitPriceApplied = calculateUnitPrice(product, newQuantity, !!companySettings.wholesaleEnabled);
       const totalPrice = unitPriceApplied * newQuantity;
 
       if (existing) {
@@ -448,6 +541,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ];
     });
     setIsCartOpen(true);
+    trackEvent('add_to_cart', product.priceUnit * quantity);
   };
 
   const updateCartQuantity = (productId: string, quantity: number, selectedSize?: string) => {
@@ -460,7 +554,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       prev.map((item) => {
         const sizeMatches = selectedSize ? (item.selectedSize || 'Único') === selectedSize : true;
         if (item.product.id === productId && sizeMatches) {
-          const unitPriceApplied = calculateUnitPrice(item.product, quantity);
+          const unitPriceApplied = calculateUnitPrice(item.product, quantity, !!companySettings.wholesaleEnabled);
           return {
             ...item,
             quantity,
@@ -545,29 +639,71 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const placeOrder = async (orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt'>): Promise<Order> => {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `TUT-${new Date().getFullYear()}-${randomSuffix}`;
-    const newOrder: Order = {
-      ...orderData,
-      id: `ord-${Date.now()}`,
-      orderNumber,
-      createdAt: new Date().toLocaleString('es-AR')
-    };
-
-    setOrders((prev) => [newOrder, ...prev]);
-
-    // Storefront shoppers are allowed to create orders under Firestore rules;
-    // avoid private CRM writes unless authenticated as Firebase Admin.
-    if (isFirebaseConnected && !isDemoMode) {
-      try {
-        await saveOrderToFirestore(newOrder);
-      } catch (e) {
-        console.error('Order sync note:', e);
+  /**
+   * Crea el pedido. En una tienda real lo hace el servidor (/api/orders), que recalcula precios,
+   * descuenta stock y genera el link de Mercado Pago. En la demo se simula en el navegador.
+   */
+  const placeOrder = async (input: CheckoutInput): Promise<PlaceOrderResult> => {
+    if (!DEMO_MODE) {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...input,
+          items: cart.map((i) => ({
+            productId: i.product.id,
+            size: i.selectedSize || 'Único',
+            quantity: i.quantity
+          }))
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.order) {
+        throw new Error(data.error || 'No pudimos registrar el pedido. Probá de nuevo en unos minutos.');
       }
+      clearCart();
+      return { order: data.order as Order, paymentUrl: data.paymentUrl || null, token: data.token };
     }
 
-    if (isFirebaseAdmin || isDemoMode) {
+    // --- Simulación para el sitio de demostración ---
+    const subtotal = cartTotal;
+    const shipping = shippingOptionsFor(companySettings, subtotal, companySettings.pickupAddress).find(
+      (o) => o.id === input.shippingMethod
+    );
+    const taxAmount = taxFor(companySettings.invoiceAEnabled ? input.invoiceType : 'B', subtotal);
+    const shippingCost = shipping?.cost || 0;
+    const newOrder: Order = {
+      id: `ord-demo-${Date.now()}`,
+      orderNumber: formatOrderNumber(companySettings.orderPrefix, Math.floor(1000 + Math.random() * 9000)),
+      customerName: input.customer.name,
+      businessName: input.customer.businessName || undefined,
+      documentId: input.customer.documentId || undefined,
+      phone: input.customer.phone,
+      email: input.customer.email || undefined,
+      shippingAddress: input.customer.address || 'Retiro en el local',
+      city: input.customer.city || '-',
+      province: input.customer.province || '-',
+      shippingMethod: input.shippingMethod,
+      shippingCost,
+      paymentMethod: input.paymentMethod,
+      invoiceType: input.invoiceType,
+      items: cart.map((i) => ({
+        product: { id: i.product.id, name: i.product.name, sku: i.product.sku, category: i.product.category },
+        quantity: i.quantity,
+        selectedSize: i.selectedSize,
+        unitPriceApplied: i.unitPriceApplied,
+        totalPrice: i.totalPrice
+      })),
+      subtotal,
+      discount: 0,
+      taxAmount,
+      total: subtotal + shippingCost + taxAmount,
+      status: 'pending_payment',
+      notes: input.customer.notes || undefined,
+      createdAt: new Date().toLocaleString('es-AR')
+    };
+    setOrders((prev) => [newOrder, ...prev]);
+    if (isDemoMode) {
       await addDeal({
         customerName: newOrder.customerName,
         businessName: newOrder.businessName || 'Cliente Tienda Online',
@@ -583,12 +719,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           selectedSize: i.selectedSize
         })),
         totalAmount: newOrder.total,
-        notes: `Pedido web ${orderNumber}. Pago: ${newOrder.paymentMethod}. Entrega: ${newOrder.shippingAddress}`
+        notes: `Pedido web ${newOrder.orderNumber} (demo). Pago: ${newOrder.paymentMethod}.`
       });
-
       await addNotification({
         type: 'new_order',
-        title: `Nuevo Pedido #${orderNumber}`,
+        title: `Nuevo Pedido #${newOrder.orderNumber}`,
         message: `${newOrder.customerName} confirmó una compra por ${formatCurrency(newOrder.total)}.`,
         priority: 'high',
         entityId: newOrder.id,
@@ -601,15 +736,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       });
     }
-
     clearCart();
-    return newOrder;
+    return { order: newOrder, paymentUrl: null };
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    const previous = orders.find((o) => o.id === orderId);
     setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status } : order)));
     if (isFirebaseAdmin) {
       await updateOrderStatusInFirestore(orderId, status);
+      // Al cancelar un pedido, las prendas vuelven al stock (una sola vez).
+      if (status === 'cancelled' && previous && previous.status !== 'cancelled' && !previous.stockRestored) {
+        await restoreStockForOrder(previous);
+      }
     }
   };
 
@@ -741,10 +880,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
     const demo = demoClients[Math.floor(Math.random() * demoClients.length)];
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNum = `TUT-${new Date().getFullYear()}-${randomSuffix}`;
+    const orderNum = formatOrderNumber(companySettings.orderPrefix, randomSuffix);
     const sampleProd = products[Math.floor(Math.random() * products.length)] || INITIAL_PRODUCTS[0];
     const qty = 2;
-    const unitPrice = calculateUnitPrice(sampleProd, qty);
+    const unitPrice = calculateUnitPrice(sampleProd, qty, !!companySettings.wholesaleEnabled);
     const selectedSize = sampleProd.sizes?.[1] || sampleProd.sizes?.[0] || 'M';
 
     const newOrder: Order = {
@@ -923,6 +1062,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addClient,
         orders,
         placeOrder,
+        productsLoading,
         updateOrderStatus,
         interactions,
         addInteraction,
