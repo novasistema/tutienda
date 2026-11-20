@@ -1,0 +1,218 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "TU TIENDA apparel item with retail and pack pricing, sizes, and material details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "hook": { "type": "string", "maxLength": 300 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Remeras y Tops",
+            "Camisas y Blusas",
+            "Pantalones y Jeans",
+            "Abrigos y Tapados",
+            "Vestidos y Conjuntos",
+            "Accesorios y Calzado"
+          ]
+        },
+        "sku": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "code": { "type": "string", "maxLength": 64 },
+        "brand": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "priceUnit": { "type": "number" },
+        "priceTiers": { "type": "object" },
+        "badges": { "type": "array" },
+        "specs": { "type": "array" },
+        "image": { "type": "string", "maxLength": 350000 },
+        "stock": { "type": "number" },
+        "sizes": { "type": "array" },
+        "color": { "type": "string", "maxLength": 80 },
+        "material": { "type": "string", "maxLength": 160 },
+        "fit": { "type": "string", "maxLength": 80 },
+        "featured": { "type": "boolean" },
+        "isNew": { "type": "boolean" }
+      },
+      "required": ["id", "name", "category", "sku", "brand", "priceUnit", "stock"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Clothing store purchase order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "customerName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "businessName": { "type": "string", "maxLength": 160 },
+        "documentId": { "type": "string", "maxLength": 40 },
+        "phone": { "type": "string", "minLength": 4, "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 160 },
+        "shippingAddress": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "city": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "province": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "shippingMethod": { "type": "string", "enum": ["transporte_expreso", "retiro_deposito", "correo_argentino"] },
+        "shippingCost": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["transferencia", "tarjeta_segura", "efectivo_deposito", "acuerdo_comercial"] },
+        "paymentDetails": { "type": "object" },
+        "invoiceType": { "type": "string", "enum": ["A", "B"] },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_payment", "paid", "preparing", "shipped", "delivered", "cancelled"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "orderNumber", "customerName", "phone", "shippingAddress", "city", "province", "shippingMethod", "paymentMethod", "invoiceType", "items", "subtotal", "total", "status", "createdAt"]
+    },
+    "Deal": {
+      "title": "Deal",
+      "description": "CRM commercial opportunity and pipeline stage",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "businessName": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "minLength": 4, "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 160 },
+        "city": { "type": "string", "maxLength": 120 },
+        "stage": { "type": "string", "enum": ["lead", "contacted", "quoted", "payment_pending", "won", "lost"] },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "assignedSalesperson": { "type": "string", "maxLength": 120 }
+      },
+      "required": ["id", "customerName", "phone", "stage", "totalAmount", "createdAt", "updatedAt"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Clothing store customer and boutique profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "businessName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "cuitOrDni": { "type": "string", "maxLength": 40 },
+        "phone": { "type": "string", "minLength": 4, "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 160 },
+        "city": { "type": "string", "maxLength": 120 },
+        "province": { "type": "string", "maxLength": 120 },
+        "tier": { "type": "string", "enum": ["Minorista", "Mayorista Plata", "Mayorista Oro", "Distribuidor"] },
+        "totalSpent": { "type": "number" },
+        "orderCount": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "lastContact": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "businessName", "phone", "tier"]
+    },
+    "Interaction": {
+      "title": "Interaction",
+      "description": "Customer interaction log or note in CRM",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "dealId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["whatsapp", "llamada", "email", "reunion", "nota"] },
+        "note": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "createdAt": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "urgency": { "type": "string", "enum": ["normal", "high", "urgent"] },
+        "clientName": { "type": "string", "maxLength": 160 }
+      },
+      "required": ["id", "clientId", "type", "note", "author", "createdAt"]
+    },
+    "CrmNotification": {
+      "title": "CrmNotification",
+      "description": "CRM real-time notification alert",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "type": { "type": "string", "enum": ["new_order", "urgent_interaction", "payment_received", "low_stock", "deal_won"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "createdAt": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "isRead": { "type": "boolean" },
+        "priority": { "type": "string", "enum": ["normal", "high", "urgent"] },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "entityType": { "type": "string", "enum": ["order", "interaction", "deal", "client"] },
+        "metadata": { "type": "object" }
+      },
+      "required": ["id", "type", "title", "message", "createdAt", "isRead", "priority"]
+    },
+    "CompanySettings": {
+      "title": "CompanySettings",
+      "description": "Company data and payment methods configuration",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "legalName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "cuit": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "address": { "type": "string", "maxLength": 200 },
+        "city": { "type": "string", "maxLength": 120 },
+        "province": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 160 },
+        "minimumOrder": { "type": "number" },
+        "bankName": { "type": "string", "maxLength": 120 },
+        "accountHolder": { "type": "string", "maxLength": 160 },
+        "cbu": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "alias": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "cardPaymentsEnabled": { "type": "boolean" },
+        "installmentsAllowed": { "type": "array" },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["companyName", "legalName", "cuit", "cbu", "alias"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized CRM administrator profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "role": { "type": "string", "enum": ["admin"] }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Public catalog items"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Orders created by buyers and tracked in CRM"
+    },
+    "/deals/{dealId}": {
+      "schema": "Deal",
+      "description": "Sales pipeline commercial opportunities"
+    },
+    "/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Customer directory"
+    },
+    "/interactions/{interactionId}": {
+      "schema": "Interaction",
+      "description": "CRM interaction notes and history"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "CrmNotification",
+      "description": "Real-time CRM alerts and notifications"
+    },
+    "/settings/{settingId}": {
+      "schema": "CompanySettings",
+      "description": "Company profile and payment method settings"
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminUser",
+      "description": "Authorized CRM administrators"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "TIEMDA DE ROPA",
+  "description": "A high-conversion online store with integrated CRM, featuring a sophisticated, catalog-inspired aesthetic for professional sales performance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

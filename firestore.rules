@@ -1,0 +1,265 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'ajnovasistemas@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Validation Blueprints
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'sku', 'brand', 'priceUnit', 'stock']) &&
+        data.keys().hasOnly(['id', 'name', 'hook', 'category', 'sku', 'code', 'brand', 'priceUnit', 'priceTiers', 'badges', 'specs', 'image', 'stock', 'sizes', 'color', 'material', 'fit', 'featured', 'isNew']) &&
+        isValidId(data.id) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+        (!('hook' in data) || (data.hook is string && data.hook.size() <= 300)) &&
+        data.category in ['Remeras y Tops', 'Camisas y Blusas', 'Pantalones y Jeans', 'Abrigos y Tapados', 'Vestidos y Conjuntos', 'Accesorios y Calzado'] &&
+        data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
+        (!('code' in data) || (data.code is string && data.code.size() <= 64)) &&
+        data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 100 &&
+        data.priceUnit is number && data.priceUnit >= 0 &&
+        (!('priceTiers' in data) || data.priceTiers is map) &&
+        (!('badges' in data) || (data.badges is list && data.badges.size() <= 20 && (data.badges.size() == 0 || data.badges[0] is string))) &&
+        (!('specs' in data) || (data.specs is list && data.specs.size() <= 20 && (data.specs.size() == 0 || data.specs[0] is map))) &&
+        (!('image' in data) || (data.image is string && data.image.size() <= 350000)) &&
+        data.stock is number && data.stock >= 0 &&
+        (!('sizes' in data) || (data.sizes is list && data.sizes.size() <= 15 && (data.sizes.size() == 0 || data.sizes[0] is string))) &&
+        (!('color' in data) || (data.color is string && data.color.size() <= 80)) &&
+        (!('material' in data) || (data.material is string && data.material.size() <= 160)) &&
+        (!('fit' in data) || (data.fit is string && data.fit.size() <= 80)) &&
+        (!('featured' in data) || data.featured is bool) &&
+        (!('isNew' in data) || data.isNew is bool);
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'orderNumber', 'customerName', 'phone', 'shippingAddress', 'city', 'province', 'shippingMethod', 'paymentMethod', 'invoiceType', 'items', 'subtotal', 'total', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'orderNumber', 'customerName', 'businessName', 'documentId', 'phone', 'email', 'shippingAddress', 'city', 'province', 'shippingMethod', 'shippingCost', 'paymentMethod', 'paymentDetails', 'invoiceType', 'items', 'subtotal', 'discount', 'taxAmount', 'total', 'status', 'notes', 'createdAt']) &&
+        isValidId(data.id) &&
+        data.orderNumber is string && data.orderNumber.size() >= 1 && data.orderNumber.size() <= 64 &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 160 &&
+        (!('businessName' in data) || (data.businessName is string && data.businessName.size() <= 160)) &&
+        (!('documentId' in data) || (data.documentId is string && data.documentId.size() <= 40)) &&
+        data.phone is string && data.phone.size() >= 4 && data.phone.size() <= 50 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 160)) &&
+        data.shippingAddress is string && data.shippingAddress.size() >= 1 && data.shippingAddress.size() <= 300 &&
+        data.city is string && data.city.size() >= 1 && data.city.size() <= 120 &&
+        data.province is string && data.province.size() >= 1 && data.province.size() <= 120 &&
+        data.shippingMethod in ['transporte_expreso', 'retiro_deposito', 'correo_argentino'] &&
+        (!('shippingCost' in data) || (data.shippingCost is number && data.shippingCost >= 0)) &&
+        data.paymentMethod in ['transferencia', 'tarjeta_segura', 'efectivo_deposito', 'acuerdo_comercial'] &&
+        (!('paymentDetails' in data) || data.paymentDetails is map) &&
+        data.invoiceType in ['A', 'B'] &&
+        data.items is list && data.items.size() >= 1 && data.items.size() <= 100 && data.items[0] is map &&
+        data.subtotal is number && data.subtotal >= 0 &&
+        (!('discount' in data) || (data.discount is number && data.discount >= 0)) &&
+        (!('taxAmount' in data) || (data.taxAmount is number && data.taxAmount >= 0)) &&
+        data.total is number && data.total >= 0 &&
+        data.status in ['pending_payment', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'] &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000)) &&
+        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64;
+    }
+
+    function isValidDeal(data) {
+      return data.keys().hasAll(['id', 'customerName', 'phone', 'stage', 'totalAmount', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'customerName', 'businessName', 'phone', 'email', 'city', 'stage', 'items', 'totalAmount', 'notes', 'createdAt', 'updatedAt', 'assignedSalesperson']) &&
+        isValidId(data.id) &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 160 &&
+        (!('businessName' in data) || (data.businessName is string && data.businessName.size() <= 160)) &&
+        data.phone is string && data.phone.size() >= 4 && data.phone.size() <= 50 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 160)) &&
+        (!('city' in data) || (data.city is string && data.city.size() <= 120)) &&
+        data.stage in ['lead', 'contacted', 'quoted', 'payment_pending', 'won', 'lost'] &&
+        (!('items' in data) || (data.items is list && data.items.size() <= 100 && (data.items.size() == 0 || data.items[0] is map))) &&
+        data.totalAmount is number && data.totalAmount >= 0 &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64 &&
+        data.updatedAt is string && data.updatedAt.size() >= 1 && data.updatedAt.size() <= 64 &&
+        (!('assignedSalesperson' in data) || (data.assignedSalesperson is string && data.assignedSalesperson.size() <= 120));
+    }
+
+    function isValidClient(data) {
+      return data.keys().hasAll(['id', 'name', 'businessName', 'phone', 'tier']) &&
+        data.keys().hasOnly(['id', 'name', 'businessName', 'cuitOrDni', 'phone', 'email', 'city', 'province', 'tier', 'totalSpent', 'orderCount', 'notes', 'lastContact']) &&
+        isValidId(data.id) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 160 &&
+        data.businessName is string && data.businessName.size() >= 1 && data.businessName.size() <= 160 &&
+        (!('cuitOrDni' in data) || (data.cuitOrDni is string && data.cuitOrDni.size() <= 40)) &&
+        data.phone is string && data.phone.size() >= 4 && data.phone.size() <= 50 &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 160)) &&
+        (!('city' in data) || (data.city is string && data.city.size() <= 120)) &&
+        (!('province' in data) || (data.province is string && data.province.size() <= 120)) &&
+        data.tier in ['Minorista', 'Mayorista Plata', 'Mayorista Oro', 'Distribuidor'] &&
+        (!('totalSpent' in data) || (data.totalSpent is number && data.totalSpent >= 0)) &&
+        (!('orderCount' in data) || (data.orderCount is number && data.orderCount >= 0)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        (!('lastContact' in data) || (data.lastContact is string && data.lastContact.size() <= 64));
+    }
+
+    function isValidInteraction(data) {
+      return data.keys().hasAll(['id', 'clientId', 'type', 'note', 'author', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'clientId', 'dealId', 'type', 'note', 'author', 'createdAt', 'urgency', 'clientName']) &&
+        isValidId(data.id) &&
+        isValidId(data.clientId) &&
+        (!('dealId' in data) || (data.dealId is string && data.dealId.size() <= 128)) &&
+        data.type in ['whatsapp', 'llamada', 'email', 'reunion', 'nota'] &&
+        data.note is string && data.note.size() >= 1 && data.note.size() <= 2000 &&
+        data.author is string && data.author.size() >= 1 && data.author.size() <= 120 &&
+        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64 &&
+        (!('urgency' in data) || data.urgency in ['normal', 'high', 'urgent']) &&
+        (!('clientName' in data) || (data.clientName is string && data.clientName.size() <= 160));
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['id', 'type', 'title', 'message', 'createdAt', 'isRead', 'priority']) &&
+        data.keys().hasOnly(['id', 'type', 'title', 'message', 'createdAt', 'isRead', 'priority', 'entityId', 'entityType', 'metadata']) &&
+        isValidId(data.id) &&
+        data.type in ['new_order', 'urgent_interaction', 'payment_received', 'low_stock', 'deal_won'] &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 1000 &&
+        data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64 &&
+        data.isRead is bool &&
+        data.priority in ['normal', 'high', 'urgent'] &&
+        (!('entityId' in data) || (data.entityId is string && data.entityId.size() <= 128)) &&
+        (!('entityType' in data) || data.entityType in ['order', 'interaction', 'deal', 'client']) &&
+        (!('metadata' in data) || data.metadata is map);
+    }
+
+    function isValidCompanySettings(data) {
+      return data.keys().hasAll(['companyName', 'legalName', 'cuit', 'cbu', 'alias']) &&
+        data.keys().hasOnly(['companyName', 'legalName', 'cuit', 'address', 'city', 'province', 'phone', 'email', 'minimumOrder', 'bankName', 'accountHolder', 'cbu', 'alias', 'cardPaymentsEnabled', 'installmentsAllowed', 'updatedAt']) &&
+        data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 120 &&
+        data.legalName is string && data.legalName.size() >= 1 && data.legalName.size() <= 160 &&
+        data.cuit is string && data.cuit.size() >= 4 && data.cuit.size() <= 40 &&
+        (!('address' in data) || (data.address is string && data.address.size() <= 200)) &&
+        (!('city' in data) || (data.city is string && data.city.size() <= 120)) &&
+        (!('province' in data) || (data.province is string && data.province.size() <= 120)) &&
+        (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 160)) &&
+        (!('minimumOrder' in data) || (data.minimumOrder is number && data.minimumOrder >= 0)) &&
+        (!('bankName' in data) || (data.bankName is string && data.bankName.size() <= 120)) &&
+        (!('accountHolder' in data) || (data.accountHolder is string && data.accountHolder.size() <= 160)) &&
+        data.cbu is string && data.cbu.size() >= 4 && data.cbu.size() <= 40 &&
+        data.alias is string && data.alias.size() >= 2 && data.alias.size() <= 80 &&
+        (!('cardPaymentsEnabled' in data) || data.cardPaymentsEnabled is bool) &&
+        (!('installmentsAllowed' in data) || (data.installmentsAllowed is list && data.installmentsAllowed.size() <= 12 && (data.installmentsAllowed.size() == 0 || data.installmentsAllowed[0] is number))) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Public Catalog Products
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(productId) && isValidProduct(incoming()) && incoming().id == productId;
+      allow update: if isAdmin() && isValidId(productId) && isValidProduct(incoming()) && incoming().id == existing().id;
+      allow delete: if isAdmin() && isValidId(productId);
+    }
+
+    // Storefront & CRM Orders (PII Protected)
+    match /orders/{orderId} {
+      allow get: if isAdmin() && isValidId(orderId);
+      allow list: if isAdmin();
+      allow create: if isValidId(orderId) && isValidOrder(incoming()) && incoming().id == orderId && (isAdmin() || incoming().status in ['pending_payment', 'paid']);
+      allow update: if isAdmin() && isValidId(orderId) && isValidOrder(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes']);
+      allow delete: if isAdmin() && isValidId(orderId);
+    }
+
+    // CRM Sales Pipeline Deals (PII Protected)
+    match /deals/{dealId} {
+      allow get: if isAdmin() && isValidId(dealId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(dealId) && isValidDeal(incoming()) && incoming().id == dealId;
+      allow update: if isAdmin() && isValidId(dealId) && isValidDeal(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin() && isValidId(dealId);
+    }
+
+    // CRM Clients Directory (PII Protected)
+    match /clients/{clientId} {
+      allow get: if isAdmin() && isValidId(clientId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(clientId) && isValidClient(incoming()) && incoming().id == clientId;
+      allow update: if isAdmin() && isValidId(clientId) && isValidClient(incoming()) &&
+        incoming().id == existing().id;
+      allow delete: if isAdmin() && isValidId(clientId);
+    }
+
+    // CRM Client Interactions (PII Protected)
+    match /interactions/{interactionId} {
+      allow get: if isAdmin() && isValidId(interactionId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(interactionId) && isValidInteraction(incoming()) && incoming().id == interactionId;
+      allow update: if isAdmin() && isValidId(interactionId) && isValidInteraction(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin() && isValidId(interactionId);
+    }
+
+    // CRM Notifications
+    match /notifications/{notificationId} {
+      allow get: if isAdmin() && isValidId(notificationId);
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(notificationId) && isValidNotification(incoming()) && incoming().id == notificationId;
+      allow update: if isAdmin() && isValidId(notificationId) && isValidNotification(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isAdmin() && isValidId(notificationId);
+    }
+
+    // Company & Store Settings
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (settingId == 'company' || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && isValidId(settingId) && isValidCompanySettings(incoming());
+      allow delete: if false;
+    }
+
+    // Authorized CRM Admins
+    match /admins/{adminId} {
+      allow get: if isVerifiedUser() && (request.auth.uid == adminId || isBootstrappedAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create, update, delete: if isBootstrappedAdmin() && isValidId(adminId);
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+      allow write: if false;
+    }
+  }
+}
