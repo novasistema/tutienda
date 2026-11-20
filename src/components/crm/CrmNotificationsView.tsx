@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { DEMO_MODE } from '../../config';
 import { CrmNotification } from '../../types';
 import { formatCurrency, generateWhatsAppLink } from '../../utils/formatters';
 import {
@@ -43,7 +44,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
     companySettings
   } = useStore();
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
   const [activeFilter, setActiveFilter] = useState<'all' | 'orders' | 'urgent' | 'unread'>('all');
   const [search, setSearch] = useState('');
 
@@ -106,7 +107,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
             onClick={toggleSound}
             className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-[#E2DFD7] bg-[#F8F7F4] text-[#141413]"
           >
-            {isSoundEnabled ? <Volume2 className="w-4 h-4 text-[#364637]" /> : <VolumeX className="w-4 h-4 text-[#6B675E]" />}
+            {isSoundEnabled ? <Volume2 className="w-4 h-4 text-[var(--brand-accent)]" /> : <VolumeX className="w-4 h-4 text-[#6B675E]" />}
             <span>{isSoundEnabled ? 'Sonido Activo' : 'Silenciado'}</span>
           </button>
 
@@ -115,7 +116,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
               onClick={markAllNotificationsAsRead}
               className="px-3 py-2 bg-[#EFECE6] hover:bg-[#E2DFD7] text-[#141413] rounded-xl text-xs font-bold flex items-center gap-1.5"
             >
-              <CheckCheck className="w-4 h-4 text-[#364637]" />
+              <CheckCheck className="w-4 h-4 text-[var(--brand-accent)]" />
               <span>Marcar leídas</span>
             </button>
           )}
@@ -132,11 +133,13 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
         </div>
       </div>
 
+      {DEMO_MODE && (
+        <>
       {/* Simulator Quick Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         <div className="bg-[#EFECE6] p-4 rounded-2xl border border-[#E2DFD7] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#141413] text-[#F8F7F4] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] text-[#F8F7F4] flex items-center justify-center shrink-0">
               <Package className="w-5 h-5" />
             </div>
             <div>
@@ -148,7 +151,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
           </div>
           <button
             onClick={() => simulateIncomingOrder()}
-            className="px-3 py-2 bg-[#141413] hover:bg-[#364637] text-white rounded-xl text-xs font-bold shrink-0 flex items-center gap-1"
+            className="px-3 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white rounded-xl text-xs font-bold shrink-0 flex items-center gap-1"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Simular</span>
@@ -177,6 +180,9 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
         </div>
       </div>
 
+        </>
+      )}
+
       {/* Filters */}
       <div className="bg-white p-3 rounded-2xl border border-[#E2DFD7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
@@ -191,7 +197,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
               onClick={() => setActiveFilter(pill.key as typeof activeFilter)}
               className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors ${
                 activeFilter === pill.key
-                  ? 'bg-[#141413] text-[#F8F7F4]'
+                  ? 'bg-[var(--brand-primary)] text-[#F8F7F4]'
                   : 'bg-[#F8F7F4] text-[#6B675E] hover:bg-[#EFECE6]'
               }`}
             >
@@ -207,7 +213,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar alerta o pedido..."
-            className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-[#F8F7F4] outline-hidden focus:border-[#364637]"
+            className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-[#E2DFD7] bg-[#F8F7F4] outline-hidden focus:border-[var(--brand-accent)]"
           />
         </div>
       </div>
@@ -245,8 +251,8 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
                       isUrgent
                         ? 'bg-red-600 text-white'
                         : isOrder
-                        ? 'bg-[#364637] text-white'
-                        : 'bg-[#141413] text-white'
+                        ? 'bg-[var(--brand-accent)] text-white'
+                        : 'bg-[var(--brand-primary)] text-white'
                     }`}
                   >
                     {isUrgent ? (
@@ -265,7 +271,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
                           isUrgent
                             ? 'bg-red-600 text-white'
                             : isOrder
-                            ? 'bg-[#364637] text-white'
+                            ? 'bg-[var(--brand-accent)] text-white'
                             : 'bg-[#EFECE6] text-[#141413]'
                         }`}
                       >
@@ -288,7 +294,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
                           </span>
                         )}
                         {notif.metadata.total && (
-                          <span className="font-mono font-bold text-[#364637]">
+                          <span className="font-mono font-bold text-[var(--brand-accent)]">
                             {formatCurrency(notif.metadata.total)}
                           </span>
                         )}
@@ -301,7 +307,7 @@ export const CrmNotificationsView: React.FC<CrmNotificationsViewProps> = ({
                   {isOrder && (
                     <button
                       onClick={() => handleAction(notif)}
-                      className="px-3.5 py-2 bg-[#141413] hover:bg-[#364637] text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
+                      className="px-3.5 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
                     >
                       <Package className="w-3.5 h-3.5" />
                       <span>Ver Pedido</span>

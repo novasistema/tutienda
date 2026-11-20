@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { DEMO_MODE } from '../../config';
 import { Lock, ArrowRight, ShieldCheck, Store, KeyRound, AlertCircle } from 'lucide-react';
 
 export const CrmLoginView: React.FC = () => {
@@ -12,7 +13,7 @@ export const CrmLoginView: React.FC = () => {
     companySettings
   } = useStore();
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
   const [username, setUsername] = useState('demo@tutienda.com.ar');
   const [password, setPassword] = useState('demo123');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -70,10 +71,12 @@ export const CrmLoginView: React.FC = () => {
           </div>
         )}
 
+        {DEMO_MODE && (
+          <>
         {/* Demo Credentials Box */}
         <div className="bg-[#F5F3EE] border border-[#E4E1DA] p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#364637]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-accent)]">
               Acceso Demo para Clientes
             </span>
             <span className="text-[10px] font-mono text-[#6B6862]">Vista previa interactiva</span>
@@ -102,7 +105,7 @@ export const CrmLoginView: React.FC = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="demo@tutienda.com.ar"
-              className="w-full text-xs px-3.5 py-2.5 border border-[#D8D4CB] bg-[#FAF9F6] focus:bg-white focus:border-[#141413] outline-hidden font-mono text-[#141413]"
+              className="w-full text-xs px-3.5 py-2.5 border border-[#D8D4CB] bg-[#FAF9F6] focus:bg-white focus:border-[var(--brand-primary)] outline-hidden font-mono text-[#141413]"
             />
           </div>
 
@@ -116,14 +119,14 @@ export const CrmLoginView: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full text-xs px-3.5 py-2.5 border border-[#D8D4CB] bg-[#FAF9F6] focus:bg-white focus:border-[#141413] outline-hidden font-mono text-[#141413]"
+              className="w-full text-xs px-3.5 py-2.5 border border-[#D8D4CB] bg-[#FAF9F6] focus:bg-white focus:border-[var(--brand-primary)] outline-hidden font-mono text-[#141413]"
             />
           </div>
 
           <button
             type="submit"
             disabled={authLoading}
-            className="w-full py-3 px-4 bg-[#141413] hover:bg-[#364637] text-white text-xs font-semibold uppercase tracking-[0.12em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="w-full py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white text-xs font-semibold uppercase tracking-[0.12em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Ingresar al Sistema (Demo)</span>
@@ -131,15 +134,20 @@ export const CrmLoginView: React.FC = () => {
           </button>
         </form>
 
+          </>
+        )}
+
         <div className="space-y-2.5 pt-2 border-t border-[#EFECE6]">
+          {DEMO_MODE && (
           <button
             type="button"
             onClick={handleOneClickDemo}
             className="w-full py-2.5 px-3 bg-[#EFECE6] hover:bg-[#E4E1DA] text-[#141413] text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
-            <KeyRound className="w-3.5 h-3.5 text-[#364637]" />
+            <KeyRound className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
             <span>Entrar directo con Usuario Demo</span>
           </button>
+          )}
 
           <button
             type="button"
@@ -147,8 +155,8 @@ export const CrmLoginView: React.FC = () => {
             disabled={googleBusy}
             className="w-full py-2.5 px-3 bg-white hover:bg-[#FAF9F6] text-[#141413] border border-[#D8D4CB] text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#364637]" />
-            <span>{googleBusy ? 'Conectando...' : 'Administrador (Google Workspace)'}</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
+            <span>{googleBusy ? 'Conectando...' : 'Ingresar con Google'}</span>
           </button>
 
           <button
@@ -157,7 +165,7 @@ export const CrmLoginView: React.FC = () => {
             className="w-full py-2 text-[#6B6862] hover:text-[#141413] text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <Store className="w-3.5 h-3.5" />
-            <span>Volver a la Tienda de Ropa</span>
+            <span>Volver a la tienda</span>
           </button>
         </div>
       </div>

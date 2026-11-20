@@ -19,7 +19,7 @@ export const SalesScriptsView: React.FC = () => {
   const getPopulatedText = (template: string) => {
     return template
       .replace(/{nombre}/g, clientName || 'hola')
-      .replace(/{negocio}/g, businessName || 'TU TIENDA')
+      .replace(/{negocio}/g, businessName || 'Mi Tienda')
       .replace(/{monto}/g, amount || '$85.000')
       .replace(/{ciudad}/g, city || 'tu ciudad');
   };
@@ -48,7 +48,7 @@ export const SalesScriptsView: React.FC = () => {
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white rounded-2xl p-5 border border-[#E2DFD7] space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413] flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-[#364637]" />
+              <Sparkles className="w-4 h-4 text-[var(--brand-accent)]" />
               <span>Personalizar Mensaje</span>
             </h4>
 
@@ -59,7 +59,7 @@ export const SalesScriptsView: React.FC = () => {
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
               <div>
@@ -68,7 +68,7 @@ export const SalesScriptsView: React.FC = () => {
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
               <div>
@@ -86,7 +86,7 @@ export const SalesScriptsView: React.FC = () => {
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
             </div>
@@ -111,14 +111,14 @@ export const SalesScriptsView: React.FC = () => {
                 onClick={() => setSelectedScriptId(script.id)}
                 className={`w-full text-left p-3.5 rounded-xl border transition-all text-xs ${
                   selectedScriptId === script.id
-                    ? 'bg-[#141413] text-[#F8F7F4] border-[#141413]'
+                    ? 'bg-[var(--brand-primary)] text-[#F8F7F4] border-[var(--brand-primary)]'
                     : 'bg-white text-[#141413] border-[#E2DFD7] hover:bg-[#EFECE6]'
                 }`}
               >
                 <span
                   className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded inline-block mb-1 ${
                     selectedScriptId === script.id
-                      ? 'bg-[#364637] text-white'
+                      ? 'bg-[var(--brand-accent)] text-white'
                       : 'bg-[#EFECE6] text-[#6B675E]'
                   }`}
                 >
@@ -133,7 +133,7 @@ export const SalesScriptsView: React.FC = () => {
         <div className="lg:col-span-7 bg-white rounded-2xl border border-[#E2DFD7] p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2DFD7] pb-3">
             <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[#364637] bg-[#EFECE6] px-2 py-0.5 rounded">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--brand-accent)] bg-[#EFECE6] px-2 py-0.5 rounded">
                 {selectedScript.category}
               </span>
               <h4 className="text-base font-bold text-[#141413] font-serif mt-1">

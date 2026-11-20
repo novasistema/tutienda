@@ -18,11 +18,11 @@ export const ProductDetailModal: React.FC = () => {
 
   if (!selectedProductForModal) return null;
   const product = selectedProductForModal;
-  const brandTitle = companySettings?.companyName || 'TU TIENDA';
-  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '5491149821100';
+  const brandTitle = companySettings?.companyName || 'Mi Tienda';
+  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '';
 
   const availableSizes = product.sizes && product.sizes.length > 0 ? product.sizes : ['Único'];
-  const currentUnitPrice = calculateUnitPrice(product, quantity);
+  const currentUnitPrice = calculateUnitPrice(product, quantity, !!companySettings.wholesaleEnabled);
   const totalCost = currentUnitPrice * quantity;
   const totalSavings = product.priceUnit * quantity - totalCost;
 
@@ -35,7 +35,7 @@ export const ProductDetailModal: React.FC = () => {
   const whatsAppLink = generateWhatsAppLink(companyPhone, whatsAppText);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#141413]/70 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[var(--brand-primary)]/70 backdrop-blur-xs">
       <div
         className="bg-white w-full sm:max-w-3xl max-h-[92dvh] overflow-y-auto border border-[#DEDAD0] shadow-2xl"
         role="dialog"
@@ -44,7 +44,7 @@ export const ProductDetailModal: React.FC = () => {
         {/* Top Modal Header */}
         <div className="px-4 sm:px-6 py-3.5 border-b border-[#EFECE6] flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#6B6862]">
-            <span className="uppercase tracking-wider text-[#364637] font-semibold">
+            <span className="uppercase tracking-wider text-[var(--brand-accent)] font-semibold">
               {product.category}
             </span>
             <span>·</span>
@@ -75,7 +75,7 @@ export const ProductDetailModal: React.FC = () => {
             {/* Contiguous Garment Purchase Block */}
             <div className="space-y-5">
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-[#364637]">
+                <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-[var(--brand-accent)]">
                   {product.brand} {product.fit ? `· ${product.fit}` : ''}
                 </p>
                 <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#141413] mt-1 leading-tight">
@@ -94,7 +94,7 @@ export const ProductDetailModal: React.FC = () => {
                   </span>
                   <span className="text-xs font-mono text-[#6B6862] ml-1.5">ARS</span>
                 </div>
-                <span className="text-[11px] text-[#364637] font-medium flex items-center gap-1">
+                <span className="text-[11px] text-[var(--brand-accent)] font-medium flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Stock disponible ({product.stock})
                 </span>
@@ -132,8 +132,8 @@ export const ProductDetailModal: React.FC = () => {
                       onClick={() => setSelectedSize(size)}
                       className={`min-w-[44px] h-10 px-3 text-xs font-mono font-semibold border transition-colors cursor-pointer ${
                         selectedSize === size
-                          ? 'bg-[#141413] text-white border-[#141413]'
-                          : 'bg-white text-[#141413] border-[#D8D4CB] hover:border-[#141413]'
+                          ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
+                          : 'bg-white text-[#141413] border-[#D8D4CB] hover:border-[var(--brand-primary)]'
                       }`}
                     >
                       {size}
@@ -169,7 +169,7 @@ export const ProductDetailModal: React.FC = () => {
                   </div>
                 </div>
 
-                {(product.priceTiers?.tier5 || product.priceTiers?.tier10) && (
+                {companySettings.wholesaleEnabled && !!(product.priceTiers?.tier5 || product.priceTiers?.tier10) && (
                   <p className="text-[11px] text-[#6B6862]">
                     Pack x5+: {product.priceTiers.tier5 ? formatCurrency(product.priceTiers.tier5, false) : '-'} c/u
                     {product.priceTiers.tier10 ? ` · Pack x10+: ${formatCurrency(product.priceTiers.tier10, false)} c/u` : ''}
@@ -177,7 +177,7 @@ export const ProductDetailModal: React.FC = () => {
                 )}
 
                 {totalSavings > 0 && (
-                  <p className="text-xs font-medium text-[#364637]">
+                  <p className="text-xs font-medium text-[var(--brand-accent)]">
                     Descuento por cantidad aplicado: ahorrás {formatCurrency(totalSavings, false)}
                   </p>
                 )}
@@ -188,26 +188,28 @@ export const ProductDetailModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="w-full py-3.5 px-5 bg-[#141413] hover:bg-[#364637] text-white text-xs font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-3.5 px-5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white text-xs font-semibold uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span>Agregar a la Bolsa · {formatCurrency(totalCost, false)}</span>
                 </button>
 
-                <a
+                {companyPhone && (
+                  <a
                   href={whatsAppLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 px-4 bg-[#EFECE6] hover:bg-[#E4E1DA] text-[#141413] text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4 text-[#364637]" />
+                  <MessageCircle className="w-4 h-4 text-[var(--brand-accent)]" />
                   <span>Consultar por WhatsApp</span>
                 </a>
+                )}
               </div>
 
               <div className="flex items-center gap-2 text-[11px] text-[#6B6862] pt-1">
-                <Truck className="w-3.5 h-3.5 text-[#364637]" />
-                <span>Despacho en 24hs a todo el país · Cambios sin cargo</span>
+                <Truck className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
+                <span>{companySettings.bannerTexts?.filter(Boolean).slice(0, 2).join(' · ') || 'Consultá envíos y cambios por WhatsApp'}</span>
               </div>
             </div>
           </div>

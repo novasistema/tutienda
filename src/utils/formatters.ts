@@ -1,4 +1,5 @@
 import { Product } from '../types';
+import { unitPriceFor } from '../../shared/commerce';
 
 export const formatCurrency = (amount: number, withCurrencySuffix = true): string => {
   const formatted = new Intl.NumberFormat('es-AR', {
@@ -10,18 +11,9 @@ export const formatCurrency = (amount: number, withCurrencySuffix = true): strin
   return withCurrencySuffix ? `${formatted} ARS` : formatted;
 };
 
-export const calculateUnitPrice = (product: Product, quantity: number): number => {
-  if (quantity >= 100 && product.priceTiers.tier100) {
-    return product.priceTiers.tier100;
-  }
-  if (quantity >= 10 && product.priceTiers.tier10) {
-    return product.priceTiers.tier10;
-  }
-  if (quantity >= 5 && product.priceTiers.tier5) {
-    return product.priceTiers.tier5;
-  }
-  return product.priceUnit;
-};
+/** Precio unitario según la cantidad. Los precios por cantidad solo aplican si la tienda vende por mayor. */
+export const calculateUnitPrice = (product: Product, quantity: number, wholesaleEnabled = true): number =>
+  unitPriceFor(product, quantity, wholesaleEnabled);
 
 export const generateWhatsAppLink = (phone: string, text: string): string => {
   const cleanPhone = phone.replace(/[^0-9]/g, '');

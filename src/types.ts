@@ -1,10 +1,5 @@
-export type ClothingCategory =
-  | 'Remeras y Tops'
-  | 'Camisas y Blusas'
-  | 'Pantalones y Jeans'
-  | 'Abrigos y Tapados'
-  | 'Vestidos y Conjuntos'
-  | 'Accesorios y Calzado';
+// Las categorías son editables por cada tienda desde Configuración.
+export type ClothingCategory = string;
 
 export interface ProductSpec {
   label: string;
@@ -66,6 +61,17 @@ export interface Deal {
   assignedSalesperson?: string;
 }
 
+/** Datos mínimos de la prenda que se guardan dentro de un pedido (sin la foto, para no superar el límite de 1 MB de Firestore). */
+export type OrderProductRef = Pick<Product, 'id' | 'name' | 'sku'> & Partial<Product>;
+
+export interface OrderItem {
+  product: OrderProductRef;
+  quantity: number;
+  selectedSize?: string;
+  unitPriceApplied: number;
+  totalPrice: number;
+}
+
 export type OrderStatus = 'pending_payment' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface Order {
@@ -81,14 +87,17 @@ export interface Order {
   province: string;
   shippingMethod: 'transporte_expreso' | 'retiro_deposito' | 'correo_argentino';
   shippingCost: number;
-  paymentMethod: 'transferencia' | 'tarjeta_segura' | 'efectivo_deposito' | 'acuerdo_comercial';
+  // 'tarjeta_segura' queda solo para leer pedidos viejos: el cobro con tarjeta ahora pasa por Mercado Pago.
+  paymentMethod: 'mercadopago' | 'transferencia' | 'efectivo_deposito' | 'acuerdo_comercial' | 'tarjeta_segura';
   paymentDetails?: {
     cardLast4?: string;
     cardBrand?: string;
     transactionId?: string;
+    mpPaymentId?: string;
+    mpStatus?: string;
   };
   invoiceType: 'A' | 'B';
-  items: CartItem[];
+  items: OrderItem[];
   subtotal: number;
   discount: number;
   taxAmount: number;
@@ -96,6 +105,8 @@ export interface Order {
   status: OrderStatus;
   notes?: string;
   createdAt: string;
+  /** true cuando el stock de este pedido ya se devolvió al cancelarlo. */
+  stockRestored?: boolean;
 }
 
 export interface Client {
@@ -165,4 +176,34 @@ export interface CompanySettings {
   cardPaymentsEnabled: boolean;
   installmentsAllowed: number[];
   updatedAt: string;
+
+  // --- Marca y personalización por cliente ---
+  tagline?: string;
+  logoUrl?: string;
+  heroImageUrl?: string;
+  heroTitle?: string;
+  heroText?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  /** Prefijo del número de pedido, ej. "TT" → TT-000123 */
+  orderPrefix?: string;
+  categories?: string[];
+  /** Tres frases del banner superior (envíos, cambios, promos). */
+  bannerTexts?: string[];
+  footerText?: string;
+
+  // --- Ventas ---
+  wholesaleEnabled?: boolean;
+  invoiceAEnabled?: boolean;
+  mercadoPagoEnabled?: boolean;
+  transferEnabled?: boolean;
+  shippingCorreoEnabled?: boolean;
+  shippingCorreoCost?: number;
+  shippingExpressEnabled?: boolean;
+  shippingExpressCost?: number;
+  pickupEnabled?: boolean;
+  pickupAddress?: string;
+  freeShippingFrom?: number;
 }

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { CATALOG_CATEGORIES, HERO_IMAGE } from '../../data/products';
+import { HERO_IMAGE } from '../../data/products';
 import { handleImageError } from '../../utils/imageUtils';
 import { ProductCard } from './ProductCard';
 import { WholesaleNoticeBanner } from '../common/WholesaleNoticeBanner';
@@ -17,9 +17,19 @@ import {
 import { generateWhatsAppLink } from '../../utils/formatters';
 
 export const Storefront: React.FC = () => {
-  const { products, setActiveTab, isCrmAuthenticated, openCreateProductModal, companySettings } = useStore();
-  const brandTitle = companySettings?.companyName || 'TU TIENDA';
-  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '5491149821100';
+  const { products, productsLoading, setActiveTab, isCrmAuthenticated, openCreateProductModal, companySettings } =
+    useStore();
+  const brandTitle = companySettings?.companyName || 'Mi Tienda';
+  const companyPhone = companySettings?.phone ? companySettings.phone.replace(/[^0-9]/g, '') : '';
+  const heroImage = companySettings.heroImageUrl || HERO_IMAGE;
+
+  // Categorías definidas en Configuración + las que tengan prendas cargadas.
+  const categories = useMemo(() => {
+    const fromSettings = companySettings.categories || [];
+    const withProducts = new Set(products.map((p) => p.category));
+    const extra = [...withProducts].filter((c) => c && !fromSettings.includes(c));
+    return ['Todos', ...fromSettings.filter((c) => withProducts.has(c)), ...extra];
+  }, [companySettings.categories, products]);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,10 +57,9 @@ export const Storefront: React.FC = () => {
       });
   }, [products, selectedCategory, searchQuery, sortBy]);
 
-  const whatsAppGeneralLink = generateWhatsAppLink(
-    companyPhone,
-    `Hola ${brandTitle}, quiero consultar por talles disponibles y envíos en la Tienda de Ropa.`
-  );
+  const whatsAppGeneralLink = companyPhone
+    ? generateWhatsAppLink(companyPhone, `Hola ${brandTitle}, quiero consultar por talles disponibles y envíos.`)
+    : null;
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] pb-16">
@@ -60,36 +69,40 @@ export const Storefront: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Editorial Copy */}
             <div className="lg:col-span-6 space-y-5">
-              <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-[#364637] font-semibold">
-                {brandTitle} · Tienda de Ropa
+              <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-[var(--brand-accent)] font-semibold">
+                {brandTitle}
+                {companySettings.tagline ? ` · ${companySettings.tagline}` : ''}
               </p>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-semibold text-[#141413] leading-[1.04] tracking-tight">
-                Prendas esenciales de diseño noble y corte contemporáneo.
+                {companySettings.heroTitle || 'Prendas esenciales de diseño noble y corte contemporáneo.'}
               </h1>
 
               <p className="text-sm sm:text-base text-[#5C5852] max-w-lg leading-relaxed">
-                Lino lavado, algodón peinado de alto gramaje y sastrería liviana pensada para durar. Comprá por unidad o aprovechá beneficios por pack.
+                {companySettings.heroText ||
+                  'Elegí tus prendas, tu talle y recibilas en tu casa. Pagá con Mercado Pago o transferencia.'}
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <a
                   href="#coleccion-ropa"
-                  className="px-6 py-3.5 bg-[#141413] hover:bg-[#364637] text-white text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 transition-colors"
+                  className="px-6 py-3.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 transition-colors"
                 >
                   <span>Explorar Colección</span>
                   <ArrowDown className="w-3.5 h-3.5" />
                 </a>
 
+                {whatsAppGeneralLink && (
                 <a
                   href={whatsAppGeneralLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-5 py-3.5 bg-white hover:bg-[#F8F7F4] text-[#141413] border border-[#D4CFC5] text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-2 transition-colors"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#364637]" />
+                  <MessageCircle className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
                   <span>Asesoramiento</span>
                 </a>
+                )}
               </div>
             </div>
 
@@ -97,7 +110,8 @@ export const Storefront: React.FC = () => {
             <div className="lg:col-span-6">
               <div className="relative overflow-hidden border border-[#DEDAD0] bg-[#E5E1D8] aspect-[16/10] sm:aspect-[16/10]">
                 <img
-                  src={HERO_IMAGE}
+                  src={heroImage}
+                  fetchPriority="high"
                   alt={`${brandTitle} Colección de Indumentaria`}
                   onError={handleImageError}
                   className="w-full h-full object-cover object-center"
@@ -127,7 +141,7 @@ export const Storefront: React.FC = () => {
               <button
                 type="button"
                 onClick={openCreateProductModal}
-                className="px-3.5 py-2 bg-[#364637] hover:bg-[#283529] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3.5 py-2 bg-[var(--brand-accent)] hover:bg-[var(--brand-accent-dark)] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Cargar Prenda</span>
@@ -137,7 +151,7 @@ export const Storefront: React.FC = () => {
                 onClick={() => setActiveTab('crm')}
                 className="px-3.5 py-2 bg-[#EFECE6] hover:bg-[#E4E1DA] text-[#141413] text-xs font-semibold transition-colors cursor-pointer"
               >
-                Ir al CRM
+                Ir al panel
               </button>
             </div>
           </div>
@@ -151,7 +165,7 @@ export const Storefront: React.FC = () => {
                 Catálogo Actual
               </p>
               <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#141413]">
-                Tienda de Ropa
+                {companySettings.tagline || 'Nuestras prendas'}
               </h2>
             </div>
             <span className="text-xs font-mono text-[#6B6862] tabular-nums">
@@ -161,14 +175,14 @@ export const Storefront: React.FC = () => {
 
           {/* Horizontal swipeable category bar (mobile-first) */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 border-b border-[#E4E1DA]">
-            {CATALOG_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
                 className={`pb-3 px-2.5 text-xs font-semibold whitespace-nowrap shrink-0 border-b-2 transition-colors cursor-pointer ${
                   selectedCategory === cat
-                    ? 'border-[#141413] text-[#141413]'
+                    ? 'border-[var(--brand-primary)] text-[#141413]'
                     : 'border-transparent text-[#6B6862] hover:text-[#141413]'
                 }`}
               >
@@ -187,7 +201,7 @@ export const Storefront: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar remera, camisa, lino, talle..."
-              className="w-full text-xs pl-9 pr-3 py-2.5 bg-white border border-[#DEDAD0] focus:border-[#141413] outline-hidden text-[#141413]"
+              className="w-full text-xs pl-9 pr-3 py-2.5 bg-white border border-[#DEDAD0] focus:border-[var(--brand-primary)] outline-hidden text-[#141413]"
             />
           </div>
 
@@ -207,7 +221,19 @@ export const Storefront: React.FC = () => {
         </div>
 
         {/* Garment Grid: 2 Columns on Mobile, 3-4 on Desktop */}
-        {filteredProducts.length === 0 ? (
+        {productsLoading && products.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6" aria-busy="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-[#EFECE6] animate-pulse" />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="bg-white border border-[#E4E1DA] p-10 text-center text-sm text-[#5C5852]">
+            {isCrmAuthenticated
+              ? 'Todavía no cargaste prendas. Usá “Cargar prenda” para publicar la primera.'
+              : 'Estamos preparando el catálogo. ¡Volvé pronto!'}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="bg-white border border-[#E4E1DA] p-10 text-center space-y-3">
             <p className="text-sm text-[#5C5852]">
               No encontramos prendas con ese filtro o búsqueda.
@@ -218,7 +244,7 @@ export const Storefront: React.FC = () => {
                 setSelectedCategory('Todos');
                 setSearchQuery('');
               }}
-              className="px-4 py-2 bg-[#141413] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer"
+              className="px-4 py-2 bg-[var(--brand-primary)] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer"
             >
               Ver todas las prendas
             </button>
@@ -231,44 +257,39 @@ export const Storefront: React.FC = () => {
           </div>
         )}
 
-        {/* Store Guarantees Footer Strip */}
+        {/* Beneficios (según la configuración de la tienda) */}
         <div className="mt-14 bg-white border border-[#E4E1DA] p-6 sm:p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-start gap-3">
-              <Truck className="w-5 h-5 text-[#364637] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413]">
-                  Envíos a Todo el País
-                </h4>
-                <p className="text-xs text-[#6B6862] mt-1 leading-relaxed">
-                  Despachos en el día en CABA y envíos por Correo Argentino o expreso a todas las provincias.
-                </p>
+            {[
+              {
+                Icon: Truck,
+                title: companySettings.shippingCorreoEnabled !== false ? 'Envíos a todo el país' : 'Retiro en el local',
+                text:
+                  companySettings.freeShippingFrom && companySettings.freeShippingFrom > 0
+                    ? `Envío gratis en compras desde $${companySettings.freeShippingFrom.toLocaleString('es-AR')}.`
+                    : companySettings.pickupAddress || 'Elegí la forma de entrega al finalizar tu compra.'
+              },
+              {
+                Icon: RotateCcw,
+                title: 'Cambios de talle',
+                text: 'Si el talle no te queda, escribinos y coordinamos el cambio.'
+              },
+              {
+                Icon: ShieldCheck,
+                title: 'Pago protegido',
+                text: companySettings.mercadoPagoEnabled
+                  ? 'Pagá con Mercado Pago: tarjetas, débito o dinero en cuenta. Tus datos no pasan por esta página.'
+                  : 'Pagá por transferencia o coordiná tu compra por WhatsApp.'
+              }
+            ].map(({ Icon, title, text }) => (
+              <div key={title} className="flex items-start gap-3">
+                <Icon className="w-5 h-5 text-[var(--brand-accent)] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413]">{title}</h4>
+                  <p className="text-xs text-[#6B6862] mt-1 leading-relaxed">{text}</p>
+                </div>
               </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <RotateCcw className="w-5 h-5 text-[#364637] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413]">
-                  Cambios de Talle Simples
-                </h4>
-                <p className="text-xs text-[#6B6862] mt-1 leading-relaxed">
-                  Tenés 30 días para cambiar cualquier prenda por otro talle o modelo sin complicaciones.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-[#364637] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#141413]">
-                  Pago Protegido &amp; Asistencia
-                </h4>
-                <p className="text-xs text-[#6B6862] mt-1 leading-relaxed">
-                  Pagá con tarjeta, transferencia bancaria o coordiná atención directa por WhatsApp.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

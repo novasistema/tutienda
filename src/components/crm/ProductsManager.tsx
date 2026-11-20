@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Product } from '../../types';
-import { CATALOG_CATEGORIES } from '../../data/products';
 import { formatCurrency } from '../../utils/formatters';
 import { resolveProductImage, handleImageError } from '../../utils/imageUtils';
 import {
@@ -29,7 +28,8 @@ export const ProductsManager: React.FC = () => {
     updateProduct,
     deleteProduct,
     setSelectedProductForModal,
-    batchUpdatePrices
+    batchUpdatePrices,
+    companySettings
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,8 +119,8 @@ export const ProductsManager: React.FC = () => {
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-[#E2DFD7]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#EFECE6] text-[#364637] px-2.5 py-1 rounded">
-              Catálogo & Inventario · TU TIENDA
+            <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#EFECE6] text-[var(--brand-accent)] px-2.5 py-1 rounded">
+              Catálogo & Inventario
             </span>
             <h2 className="text-xl sm:text-3xl font-bold text-[#141413] font-serif tracking-tight mt-2">
               Prendas, Talles & Fotografías
@@ -135,13 +135,13 @@ export const ProductsManager: React.FC = () => {
               onClick={() => setIsBatchPriceModalOpen(true)}
               className="flex-1 sm:flex-none px-3.5 py-2.5 bg-[#EFECE6] hover:bg-[#E2DFD7] text-[#141413] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
             >
-              <Percent className="w-3.5 h-3.5 text-[#364637]" />
+              <Percent className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
               <span>Ajuste Precios</span>
             </button>
 
             <button
               onClick={openCreateProductModal}
-              className="flex-1 sm:flex-none px-4 py-2.5 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
             >
               <Camera className="w-4 h-4" />
               <span>Cargar Prenda + Foto</span>
@@ -173,7 +173,7 @@ export const ProductsManager: React.FC = () => {
             <span className="text-[11px] font-bold text-[#6B675E] uppercase tracking-wider block">
               Valorización Lista
             </span>
-            <div className="text-lg sm:text-2xl font-bold font-mono text-[#364637] mt-1">
+            <div className="text-lg sm:text-2xl font-bold font-mono text-[var(--brand-accent)] mt-1">
               {formatCurrency(totalStockValuation, false)}
             </div>
           </div>
@@ -199,7 +199,7 @@ export const ProductsManager: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar prenda por nombre, SKU o color..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#E2DFD7] bg-[#F8F7F4] focus:border-[#364637] focus:bg-white outline-hidden"
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[#E2DFD7] bg-[#F8F7F4] focus:border-[var(--brand-accent)] focus:bg-white outline-hidden"
             />
           </div>
 
@@ -210,7 +210,7 @@ export const ProductsManager: React.FC = () => {
               className="flex-1 sm:flex-none text-xs py-2 px-3 rounded-xl border border-[#E2DFD7] bg-[#F8F7F4] font-semibold text-[#141413] outline-hidden"
             >
               <option value="Todos">Todas las Categorías</option>
-              {CATALOG_CATEGORIES.filter((c) => c !== 'Todos').map((c) => (
+              {(companySettings.categories || []).map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -274,7 +274,7 @@ export const ProductsManager: React.FC = () => {
           </p>
           <button
             onClick={openCreateProductModal}
-            className="mt-4 px-4 py-2 bg-[#141413] text-[#F8F7F4] rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+            className="mt-4 px-4 py-2 bg-[var(--brand-primary)] text-[#F8F7F4] rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nueva Prenda</span>
@@ -297,7 +297,7 @@ export const ProductsManager: React.FC = () => {
                     className="w-20 h-24 object-cover rounded-xl bg-[#F8F7F4] border border-[#E2DFD7] shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#364637] block">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand-accent)] block">
                       {product.category}
                     </span>
                     <h3 className="text-sm font-bold text-[#141413] line-clamp-2 leading-snug mt-0.5">
@@ -334,7 +334,7 @@ export const ProductsManager: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => openEditProductModal(product)}
-                      className="px-3 py-1.5 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1"
+                      className="px-3 py-1.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Editar</span>
@@ -364,7 +364,7 @@ export const ProductsManager: React.FC = () => {
             <div className="hidden md:block bg-white rounded-2xl border border-[#E2DFD7] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#141413] text-[#F8F7F4] font-mono text-[11px] uppercase tracking-wider">
+                  <thead className="bg-[var(--brand-primary)] text-[#F8F7F4] font-mono text-[11px] uppercase tracking-wider">
                     <tr>
                       <th className="py-3.5 px-4">Prenda & Color</th>
                       <th className="py-3.5 px-3">Categoría & Talles</th>
@@ -418,7 +418,7 @@ export const ProductsManager: React.FC = () => {
 
                         <td className="py-3.5 px-3 whitespace-nowrap font-mono text-[11px] text-[#6B675E]">
                           <div>5u: {product.priceTiers?.tier5 ? formatCurrency(product.priceTiers.tier5, false) : '-'}</div>
-                          <div className="text-[#364637] font-bold">
+                          <div className="text-[var(--brand-accent)] font-bold">
                             10u: {product.priceTiers?.tier10 ? formatCurrency(product.priceTiers.tier10, false) : '-'}
                           </div>
                         </td>
@@ -469,7 +469,7 @@ export const ProductsManager: React.FC = () => {
                             </button>
                             <button
                               onClick={() => openEditProductModal(product)}
-                              className="p-1.5 rounded-lg bg-[#EFECE6] text-[#141413] hover:bg-[#141413] hover:text-white transition-colors"
+                              className="p-1.5 rounded-lg bg-[#EFECE6] text-[#141413] hover:bg-[var(--brand-primary)] hover:text-white transition-colors"
                               title="Editar prenda / cambiar foto"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -495,7 +495,7 @@ export const ProductsManager: React.FC = () => {
 
       {/* Batch Price Modal */}
       {isBatchPriceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#141413]/70 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[var(--brand-primary)]/70 backdrop-blur-xs">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#E2DFD7]">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2DFD7]">
               <h3 className="text-base font-bold text-[#141413] font-serif">
@@ -518,7 +518,7 @@ export const ProductsManager: React.FC = () => {
                   className="w-full p-2.5 rounded-xl border border-[#D4D0C7] text-xs font-semibold bg-white outline-hidden"
                 >
                   <option value="Todos">Toda la Colección ({products.length} prendas)</option>
-                  {CATALOG_CATEGORIES.filter((c) => c !== 'Todos').map((c) => (
+                  {(companySettings.categories || []).map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -548,7 +548,7 @@ export const ProductsManager: React.FC = () => {
                       onClick={() => setBatchPercentage(pct)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${
                         batchPercentage === pct
-                          ? 'bg-[#141413] text-white border-[#141413]'
+                          ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
                           : 'bg-[#F8F7F4] text-[#6B675E] border-[#E2DFD7]'
                       }`}
                     >
@@ -577,7 +577,7 @@ export const ProductsManager: React.FC = () => {
               <button
                 type="button"
                 onClick={handleApplyBatchPrices}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#141413] hover:bg-[#364637] text-[#F8F7F4]"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4]"
               >
                 Aplicar Ajuste
               </button>
@@ -588,7 +588,7 @@ export const ProductsManager: React.FC = () => {
 
       {/* Delete Confirmation */}
       {productToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141413]/70 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--brand-primary)]/70 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-[#E2DFD7]">
             <div className="w-11 h-11 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
               <AlertTriangle className="w-5 h-5" />

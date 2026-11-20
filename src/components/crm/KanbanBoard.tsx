@@ -23,7 +23,7 @@ const STAGES: StageConfig[] = [
   { key: 'lead', title: 'Nueva Consulta', dotColor: 'bg-blue-500' },
   { key: 'contacted', title: 'Asesorado / Talle', dotColor: 'bg-purple-500' },
   { key: 'quoted', title: 'Presupuesto Enviado', dotColor: 'bg-amber-500' },
-  { key: 'payment_pending', title: 'Esperando Pago', dotColor: 'bg-[#364637]' },
+  { key: 'payment_pending', title: 'Esperando Pago', dotColor: 'bg-[var(--brand-accent)]' },
   { key: 'won', title: 'Venta Confirmada', dotColor: 'bg-emerald-600' },
   { key: 'lost', title: 'Cancelada', dotColor: 'bg-zinc-400' }
 ];
@@ -34,7 +34,7 @@ export const KanbanBoard: React.FC = () => {
   const [selectedDealForNotes, setSelectedDealForNotes] = useState<Deal | null>(null);
   const [mobileStage, setMobileStage] = useState<DealStage>('lead');
 
-  const brandName = companySettings?.companyName || 'TU TIENDA';
+  const brandName = companySettings?.companyName || 'Mi Tienda';
 
   const [newDeal, setNewDeal] = useState({
     customerName: '',
@@ -45,7 +45,7 @@ export const KanbanBoard: React.FC = () => {
     stage: 'lead' as DealStage,
     totalAmount: 95000,
     notes: '',
-    assignedSalesperson: 'Asesoría TU TIENDA'
+    assignedSalesperson: `Asesoría ${brandName}`
   });
 
   const handleCreateDeal = (e: React.FormEvent) => {
@@ -75,7 +75,7 @@ export const KanbanBoard: React.FC = () => {
       stage: 'lead',
       totalAmount: 95000,
       notes: '',
-      assignedSalesperson: 'Asesoría TU TIENDA'
+      assignedSalesperson: `Asesoría ${brandName}`
     });
   };
 
@@ -169,7 +169,7 @@ export const KanbanBoard: React.FC = () => {
             {next && (
               <button
                 onClick={() => updateDealStage(deal.id, next)}
-                className="px-2.5 py-1.5 bg-[#141413] hover:bg-[#364637] text-white rounded-md text-[10px] font-bold flex items-center gap-0.5"
+                className="px-2.5 py-1.5 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white rounded-md text-[10px] font-bold flex items-center gap-0.5"
               >
                 <span>Avanzar</span>
                 <ChevronRight className="w-3 h-3" />
@@ -195,7 +195,7 @@ export const KanbanBoard: React.FC = () => {
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2 bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+          className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Nueva Consulta</span>
@@ -214,7 +214,7 @@ export const KanbanBoard: React.FC = () => {
                 onClick={() => setMobileStage(st.key)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 ${
                   active
-                    ? 'bg-[#141413] text-[#F8F7F4]'
+                    ? 'bg-[var(--brand-primary)] text-[#F8F7F4]'
                     : 'bg-white text-[#6B675E] border border-[#E2DFD7]'
                 }`}
               >
@@ -282,7 +282,7 @@ export const KanbanBoard: React.FC = () => {
 
       {/* Add Deal Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#141413]/75 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#E2DFD7]">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2DFD7] mb-4">
               <h3 className="font-bold text-[#141413] font-serif text-base">
@@ -308,7 +308,7 @@ export const KanbanBoard: React.FC = () => {
                     value={newDeal.customerName}
                     onChange={(e) => setNewDeal({ ...newDeal, customerName: e.target.value })}
                     placeholder="Ej. Camila Rojas"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
                 <div>
@@ -320,7 +320,7 @@ export const KanbanBoard: React.FC = () => {
                     value={newDeal.businessName}
                     onChange={(e) => setNewDeal({ ...newDeal, businessName: e.target.value })}
                     placeholder="Ej. Consulta Instagram"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
               </div>
@@ -336,7 +336,7 @@ export const KanbanBoard: React.FC = () => {
                     value={newDeal.phone}
                     onChange={(e) => setNewDeal({ ...newDeal, phone: e.target.value })}
                     placeholder="+54 9 11 ..."
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
                 <div>
@@ -346,7 +346,7 @@ export const KanbanBoard: React.FC = () => {
                     value={newDeal.city}
                     onChange={(e) => setNewDeal({ ...newDeal, city: e.target.value })}
                     placeholder="Ej. Rosario"
-                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                   />
                 </div>
               </div>
@@ -388,7 +388,7 @@ export const KanbanBoard: React.FC = () => {
                   value={newDeal.notes}
                   onChange={(e) => setNewDeal({ ...newDeal, notes: e.target.value })}
                   placeholder="Ej. Consulta por Tapado Oliva talle M y Pantalón Sastrero talle 42..."
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[#364637]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D4D0C7] outline-hidden focus:border-[var(--brand-accent)]"
                 />
               </div>
 
@@ -402,7 +402,7 @@ export const KanbanBoard: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-[#141413] hover:bg-[#364637] text-[#F8F7F4] rounded-xl"
+                  className="px-5 py-2 text-xs font-bold bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-[#F8F7F4] rounded-xl"
                 >
                   Guardar
                 </button>
@@ -414,7 +414,7 @@ export const KanbanBoard: React.FC = () => {
 
       {/* Note view popup */}
       {selectedDealForNotes && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141413]/75 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--brand-primary)]/75 backdrop-blur-xs">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-[#E2DFD7] shadow-2xl">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2DFD7] mb-3">
               <h4 className="font-bold text-[#141413] text-sm">
@@ -448,7 +448,7 @@ export const KanbanBoard: React.FC = () => {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setSelectedDealForNotes(null)}
-                className="px-4 py-2 bg-[#141413] text-white rounded-xl text-xs font-bold"
+                className="px-4 py-2 bg-[var(--brand-primary)] text-white rounded-xl text-xs font-bold"
               >
                 Cerrar
               </button>
